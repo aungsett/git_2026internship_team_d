@@ -108,7 +108,7 @@ export default function LoginCard({
             type={showPassword ? "text" : "password"}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="password"
+            placeholder="Enter password"
             required
             className="w-full border border-black rounded-lg pl-10 pr-10 py-3 focus:outline-none"
           />
