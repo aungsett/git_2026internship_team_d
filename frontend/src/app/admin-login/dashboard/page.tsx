@@ -1,199 +1,406 @@
 "use client";
-import { useState } from "react";
-import { Search, ChevronDown, FileDown, Plus } from "lucide-react";
 
-type ApplicantStatus = "New" | "Review" | "Shortlisted";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import {
+  getToken,
+  getAdminStats,
+  getAdminApplications,
+  getCourses,
+  getAdminExportCsv,
+  type AdminApplication,
+  type AdminStats,
+} from "@/app/lib/apis";
 
-type StatItem = {
-  title: string;
-  value: string;
-  change: string;
-  color: string;
-};
+type Course = { course_id: number; course_name: string; course_level: string };
 
-type Applicant = {
-  id: number;
-  name: string;
-  email: string;
-  edu: string;
-  exp: string;
-  course: string;
-  status: ApplicantStatus;
-  date: string;
-  color: string;
-};
-
-const stats: StatItem[] = [
-  { title: "Total Applications", value: "1,247", change: "+12% from last month", color: "border-purple-400" },
-  { title: "This Week", value: "48", change: "+8% from last week", color: "border-blue-400" },
-  { title: "Shortlisted", value: "156", change: "+23% increase", color: "border-green-400" },
-  { title: "Pending Review", value: "89", change: "Needs attention", color: "border-orange-400" },
+const STATUS_OPTIONS = [
+  "All Status",
+  "New",
+  "Under Review",
+  "Shortlisted",
+  "Rejected",
 ];
 
-const applicantsData: Applicant[] = [
-  { id: 1, name: "Tanaka Yuki", email: "tanaka.yuki@email.com", edu: "Master's", exp: "5 years", course: "JLPT N2", status: "New", date: "Jan 8, 2026", color: "bg-purple-500" },
-  { id: 2, name: "Suzuki Ken", email: "s.ken@email.com", edu: "Bachelor's", exp: "3 years", course: "JLPT N3", status: "Review", date: "Jan 7, 2026", color: "bg-pink-500" },
-  { id: 3, name: "Mori Hana", email: "mori.hana@email.com", edu: "Doctorate", exp: "8 years", course: "Business", status: "Shortlisted", date: "Jan 6, 2026", color: "bg-green-500" },
+const AVATAR_COLORS = [
+  "from-purple-400 to-purple-600",
+  "from-pink-400 to-pink-600",
+  "from-green-400 to-green-600",
+  "from-blue-400 to-blue-600",
+  "from-orange-400 to-orange-600",
 ];
 
 export default function AdminDashboard() {
+  const router = useRouter();
   const [search, setSearch] = useState("");
-  const [selected, setSelected] = useState<number[]>([]);
+  const [statusFilter, setStatusFilter] = useState("All Status");
+  const [courseFilter, setCourseFilter] = useState("All Courses");
+  const [stats, setStats] = useState<AdminStats | null>(null);
+  const [applications, setApplications] = useState<AdminApplication[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const toggle = (id: number) => {
-    setSelected((prev) => prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]);
+  useEffect(() => {
+    if (!getToken()) {
+      router.replace("/admin-login");
+      return;
+    }
+    getAdminStats()
+      .then(setStats)
+      .catch((e) =>
+        setError(e instanceof Error ? e.message : "Failed to load stats")
+      );
+    getCourses()
+      .then(setCourses)
+      .catch(() => setCourses([]));
+  }, [router]);
+
+  useEffect(() => {
+    if (!getToken()) return;
+    let cancelled = false;
+    void Promise.resolve().then(() => {
+      if (!cancelled) setLoading(true);
+    });
+    getAdminApplications({
+      search: search || undefined,
+      status: statusFilter !== "All Status" ? statusFilter : undefined,
+      course_id: courseFilter !== "All Courses" ? courseFilter : undefined,
+    })
+      .then((data) => {
+        if (!cancelled) setApplications(data);
+      })
+      .catch((e) => {
+        if (!cancelled)
+          setError(e instanceof Error ? e.message : "Failed to load");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [search, statusFilter, courseFilter]);
+
+  const handleExportCsv = () => {
+    getAdminExportCsv()
+      .then((blob) => {
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `applicants_export_${Date.now()}.csv`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+      })
+      .catch(() => setError("Export failed"));
   };
 
-  const toggleAll = () => {
-    if (selected.length === applicantsData.length) setSelected([]);
-    else setSelected(applicantsData.map((a) => a.id));
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    router.replace("/admin-login");
   };
+
+  const statCards = stats
+    ? [
+        {
+          label: "Total Applications",
+          value: stats.total_applications,
+          change: "All time",
+          icon: "📊",
+          accent: "border-l-purple-400",
+        },
+        {
+          label: "This Week",
+          value: stats.this_week,
+          change: "Last 7 days",
+          icon: "📈",
+          accent: "border-l-blue-400",
+        },
+        {
+          label: "Shortlisted",
+          value: stats.shortlisted,
+          change: "Selected",
+          icon: "✅",
+          accent: "border-l-green-400",
+        },
+        {
+          label: "Pending Review",
+          value: stats.pending_review,
+          change: "Needs attention",
+          icon: "⏳",
+          accent: "border-l-orange-400",
+        },
+      ]
+    : [];
 
   return (
-    <div className="min-h-screen bg-gray-50 text-black">
-      <div className="max-w-7xl mx-auto p-8">
-        <Header />
+    <div className="min-h-screen text-[#1e293b]">
+      {/* Nav */}
+      <nav className="fixed top-0 left-0 right-0 z-50 px-4 sm:px-6 lg:px-12 py-3 sm:py-4 flex flex-wrap justify-between items-center gap-2 bg-white/95 backdrop-blur-xl border-b border-[#e2e8f0]">
+        <div className="flex items-center gap-2 sm:gap-2.5 text-lg sm:text-xl font-bold text-[#1e293b]">
+          <span className="w-9 h-9 sm:w-10 sm:h-10 bg-linear-to-br from-cyan-200 to-purple-300 rounded-xl flex items-center justify-center text-base sm:text-lg shrink-0">
+            🎯
+          </span>
+          RecruitPro
+        </div>
+        <div className="flex items-center gap-4 sm:gap-6">
+          <Link href="/admin-login/dashboard" className="text-indigo-500 text-sm sm:text-base font-medium no-underline py-2">
+            Dashboard
+          </Link>
+          <button
+            onClick={handleLogout}
+            className="text-[#64748b] text-sm sm:text-base font-medium hover:text-[#1e293b] bg-transparent border-none cursor-pointer py-2"
+          >
+            🚪 Log out
+          </button>
+        </div>
+      </nav>
+
+      {/* Dashboard */}
+      <main className="pt-[88px] sm:pt-[100px] pb-8 sm:pb-12 px-4 sm:px-6 lg:px-12 max-w-[1400px] mx-auto">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+          <div>
+            <h1 className="text-[2rem] font-extrabold text-[#0f172a]">
+              Applicant Dashboard
+            </h1>
+            <p className="text-[#64748b] mt-1">
+              Track and manage all applications
+            </p>
+          </div>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={handleExportCsv}
+              className="py-3 px-6 bg-white border-2 border-[#e2e8f0] rounded-xl text-[#475569] font-semibold cursor-pointer transition-all hover:border-[#cbd5e1] hover:bg-[#f8fafc]"
+            >
+              📥 Export CSV
+            </button>
+          </div>
+        </div>
+
+        {error && (
+          <div className="rounded-xl bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm mb-6">
+            {error}
+          </div>
+        )}
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
-          {stats.map((s) => (
-            <StatCard key={s.title} {...s} />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+          {statCards.map((s) => (
+            <div
+              key={s.label}
+              className={`bg-white rounded-[20px] p-6 flex justify-between items-center shadow-[0_2px_4px_rgba(0,0,0,0.02)] border border-[#f1f5f9] border-l-4 ${s.accent} transition-all hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(0,0,0,0.06)]`}
+            >
+              <div className="flex flex-col">
+                <span className="text-[0.9rem] text-[#64748b] mb-2">
+                  {s.label}
+                </span>
+                <span className="text-[2rem] font-extrabold text-[#0f172a] mb-1">
+                  {s.value}
+                </span>
+                <span className="text-[0.8rem] text-[#64748b]">
+                  {s.change}
+                </span>
+              </div>
+              <div className="w-14 h-14 bg-[#f8fafc] rounded-[14px] flex items-center justify-center text-2xl">
+                {s.icon}
+              </div>
+            </div>
           ))}
         </div>
 
         {/* Filters */}
-        <div className="flex flex-col lg:flex-row gap-4 mt-8 items-start lg:items-center justify-between">
-          <div className="relative w-full lg:w-1/2">
-            <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
+        <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center mb-6">
+          <div className="flex-1 min-w-[280px] flex items-center gap-3 bg-white border-2 border-[#e2e8f0] rounded-xl px-4 focus-within:border-purple-400">
+            <span>🔍</span>
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by name, email..."
-              className="w-full border rounded-lg pl-9 pr-4 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              className="flex-1 border-none py-3.5 text-[0.95rem] outline-none bg-transparent placeholder:text-[#94a3b8]"
             />
           </div>
-
-          <div className="flex gap-3 items-center">
-            <Select label="All Status" />
-            <Select label="All Courses" />
-            <Select label="All Education" />
-            <span className="text-sm text-black">{selected.length} selected</span>
+          <div className="flex gap-3 flex-wrap">
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="py-3 px-4 pr-9 bg-white border-2 border-[#e2e8f0] rounded-xl text-[0.9rem] text-[#475569] cursor-pointer appearance-none bg-no-repeat bg-[right_12px_center] bg-[length:16px]"
+              style={{
+                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E")`,
+              }}
+            >
+              {STATUS_OPTIONS.map((opt) => (
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
+              ))}
+            </select>
+            <select
+              value={courseFilter}
+              onChange={(e) => setCourseFilter(e.target.value)}
+              className="py-3 px-4 pr-9 bg-white border-2 border-[#e2e8f0] rounded-xl text-[0.9rem] text-[#475569] cursor-pointer appearance-none bg-no-repeat bg-[right_12px_center] bg-[length:16px]"
+              style={{
+                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E")`,
+              }}
+            >
+              <option value="All Courses">All Courses</option>
+              {courses.map((c) => (
+                <option key={c.course_id} value={String(c.course_id)}>
+                  {c.course_name}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 
         {/* Table */}
-        <div className="bg-white rounded-2xl shadow mt-8 overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="text-black border-b bg-gray-50">
-              <tr>
-                <th className="px-6">
-                  <input type="checkbox" checked={selected.length === applicantsData.length} onChange={toggleAll} />
-                </th>
-                <th className="py-4 text-left">Applicant</th>
-                <th>Education</th>
-                <th>Experience</th>
-                <th>Course</th>
-                <th>Status</th>
-                <th>Date</th>
-                <th></th>
-              </tr>
-            </thead>
+        <div className="bg-white rounded-[16px] sm:rounded-[20px] overflow-hidden shadow-[0_2px_4px_rgba(0,0,0,0.02)] border border-[#f1f5f9] overflow-x-auto">
+          {loading ? (
+            <div className="p-8 sm:p-12 text-center text-[#64748b]">Loading...</div>
+          ) : (
+            <table className="w-full border-collapse min-w-[640px]">
+              <thead>
+                <tr>
+                  <th className="py-4 px-5 text-left bg-[#f8fafc] text-[0.8rem] font-semibold uppercase tracking-[0.5px] text-[#64748b]">
+                    Applicant
+                  </th>
+                  <th className="py-4 px-5 text-left bg-[#f8fafc] text-[0.8rem] font-semibold uppercase tracking-[0.5px] text-[#64748b]">
+                    Education
+                  </th>
+                  <th className="py-4 px-5 text-left bg-[#f8fafc] text-[0.8rem] font-semibold uppercase tracking-[0.5px] text-[#64748b]">
+                    Experience
+                  </th>
+                  <th className="py-4 px-5 text-left bg-[#f8fafc] text-[0.8rem] font-semibold uppercase tracking-[0.5px] text-[#64748b]">
+                    Course
+                  </th>
+                  <th className="py-4 px-5 text-left bg-[#f8fafc] text-[0.8rem] font-semibold uppercase tracking-[0.5px] text-[#64748b]">
+                    Status
+                  </th>
+                  <th className="py-4 px-5 text-left bg-[#f8fafc] text-[0.8rem] font-semibold uppercase tracking-[0.5px] text-[#64748b]">
+                    Date
+                  </th>
+                  <th className="py-4 px-5 bg-[#f8fafc]"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {applications.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={7}
+                      className="py-12 text-center text-[#64748b]"
+                    >
+                      No applications found.
+                    </td>
+                  </tr>
+                ) : (
+                  applications.map((a, i) => {
+                    const date = a.applied_on
+                      ? new Date(a.applied_on).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        })
+                      : "—";
+                    const initials =
+                      a.full_name
+                        ?.split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .slice(0, 2) || "?";
+                    const colorClass =
+                      AVATAR_COLORS[i % AVATAR_COLORS.length];
 
-            <tbody>
-              {applicantsData.map((a) => (
-                <Row key={a.id} data={a} checked={selected.includes(a.id)} toggle={toggle} />
-              ))}
-            </tbody>
-          </table>
+                    return (
+                      <tr
+                        key={a.application_id}
+                        onClick={() =>
+                          router.push(
+                            `/admin-login/dashboard/applicants/${a.application_id}`
+                          )
+                        }
+                        className="border-t border-[#f1f5f9] cursor-pointer transition-colors hover:bg-purple-50/40"
+                      >
+                        <td className="py-4 px-5">
+                          <div className="flex items-center gap-3.5">
+                            <div
+                              className={`w-[42px] h-[42px] rounded-xl bg-linear-to-br ${colorClass} flex items-center justify-center font-semibold text-[0.85rem] text-white`}
+                            >
+                              {initials}
+                            </div>
+                            <div>
+                              <strong className="block text-[#0f172a]">
+                                {a.full_name}
+                              </strong>
+                              <span className="text-[0.85rem] text-[#94a3b8]">
+                                {a.email}
+                              </span>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-4 px-5">
+                          {a.highest_degree ?? "—"}
+                        </td>
+                        <td className="py-4 px-5">
+                          {a.years_experience
+                            ? `${a.years_experience} years`
+                            : "—"}
+                        </td>
+                        <td className="py-4 px-5">
+                          <span className="py-1.5 px-3 bg-purple-100 text-purple-700 rounded-lg text-[0.8rem] font-medium">
+                            {a.course_name}
+                          </span>
+                        </td>
+                        <td className="py-4 px-5">
+                          <StatusBadge status={a.status} />
+                        </td>
+                        <td className="py-4 px-5">{date}</td>
+                        <td className="py-4 px-5">
+                          <Link
+                            href={`/admin-login/dashboard/applicants/${a.application_id}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="py-2 px-4 bg-[#f8fafc] border-2 border-[#e2e8f0] rounded-[10px] text-indigo-500 font-semibold no-underline transition-all hover:bg-purple-50 hover:border-purple-300 text-sm"
+                          >
+                            View
+                          </Link>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          )}
+
+          {!loading && applications.length > 0 && (
+            <div className="flex justify-between items-center py-4 px-5 bg-[#f8fafc] text-[#64748b] text-[0.9rem] border-t border-[#f1f5f9]">
+              <span>
+                Showing 1-{applications.length} of {applications.length}{" "}
+                applicants
+              </span>
+            </div>
+          )}
         </div>
-      </div>
+      </main>
     </div>
   );
 }
 
-function Header() {
-  return (
-    <div className="flex items-center justify-between">
-      <div>
-        <h1 className="text-3xl font-bold">Applicant Dashboard</h1>
-        <p className="text-black mt-1">Track and manage all applications</p>
-      </div>
-
-      <div className="flex gap-3">
-        <button className="border rounded-lg px-4 py-2 bg-white hover:bg-gray-100 flex items-center gap-2">
-          <FileDown size={16} /> Export CSV
-        </button>
-        <button className="bg-indigo-500 text-white px-5 py-2 rounded-lg hover:bg-indigo-600 flex items-center gap-2">
-          <Plus size={16} /> Add Applicant
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function StatCard({ title, value, change, color }: StatItem) {
-  return (
-    <div className={`bg-white rounded-2xl p-6 shadow border-l-4 ${color}`}>
-      <p className="text-black text-sm">{title}</p>
-      <h2 className="text-3xl font-bold mt-2">{value}</h2>
-      <p className="text-black text-sm mt-2">{change}</p>
-    </div>
-  );
-}
-
-function Row({
-  data,
-  checked,
-  toggle,
-}: {
-  data: Applicant;
-  checked: boolean;
-  toggle: (id: number) => void;
-}) {
-  const { id, name, email, edu, exp, course, status, date, color } = data;
-  return (
-    <tr className="border-b last:border-0 hover:bg-gray-50">
-      <td className="px-6">
-        <input type="checkbox" checked={checked} onChange={() => toggle(id)} />
-      </td>
-      <td className="py-4">
-        <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-lg text-white flex items-center justify-center font-semibold ${color}`}>
-            {name.split(" ").map((n) => n[0]).join("")}
-          </div>
-          <div>
-            <p className="font-medium">{name}</p>
-            <p className="text-black text-xs">{email}</p>
-          </div>
-        </div>
-      </td>
-      <td>{edu}</td>
-      <td>{exp}</td>
-      <td>
-        <span className="bg-indigo-100 text-black px-3 py-1 rounded-full text-xs">{course}</span>
-      </td>
-      <td><StatusBadge status={status} /></td>
-      <td>{date}</td>
-      <td className="pr-6">
-        <button className="border rounded-lg px-4 py-1.5 hover:bg-gray-100">View</button>
-      </td>
-    </tr>
-  );
-}
-
-function StatusBadge({ status }: { status: ApplicantStatus }) {
-  const map: Record<ApplicantStatus, string> = {
-    New: "bg-blue-100 text-black",
-    Review: "bg-yellow-100 text-black",
-    Shortlisted: "bg-green-100 text-black",
+function StatusBadge({ status }: { status: string }) {
+  const styles: Record<string, string> = {
+    New: "bg-[#e0e7ff] text-[#4f46e5]",
+    "Under Review": "bg-[#fef3c7] text-[#d97706]",
+    Shortlisted: "bg-[#d1fae5] text-[#059669]",
+    Rejected: "bg-[#fee2e2] text-[#dc2626]",
   };
-  return <span className={`px-3 py-1 rounded-full text-xs font-medium ${map[status] || "bg-gray-100 text-black"}`}>{status}</span>;
-}
-
-function Select({ label }: { label: string }) {
   return (
-    <button className="border rounded-lg px-4 py-2 bg-white text-black flex items-center gap-2">
-      {label} <ChevronDown size={16} />
-    </button>
+    <span
+      className={`py-1.5 px-3.5 rounded-[20px] text-[0.8rem] font-medium ${
+        styles[status] || "bg-gray-100 text-gray-800"
+      }`}
+    >
+      {status}
+    </span>
   );
 }

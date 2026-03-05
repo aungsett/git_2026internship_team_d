@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Applicant Detail - Fresh Minimal | ATS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="detail.css">
+</head>
+
+<body>
+    <nav class="nav">
+        <div class="logo"><span class="logo-icon">🎌</span> NihonGo Academy</div>
+        <div class="nav-links">
+            <a href="applicant-form.html">Apply</a>
+            <a href="admin-dashboard.html" class="active">Dashboard</a>
+            <a href="../index.html">Templates</a>
+        </div>
+    </nav>
+
+    <main class="detail-page">
+        <a href="admin-dashboard.html" class="back-nav">← Back to Dashboard</a>
+
+        <div class="detail-container">
+            <!-- Profile Header -->
+            <div class="profile-header-card">
+                <div class="profile-main">
+                    <div class="profile-avatar">TY</div>
+                    <div class="profile-info">
+                        <h1>Tanaka Yuki</h1>
+                        <p>tanaka.yuki@email.com</p>
+                        <div class="profile-tags">
+                            <span class="tag purple">JLPT N2</span>
+                            <span class="tag blue">5 Years Exp</span>
+                            <span class="status new">New Application</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="profile-actions">
+                    <button class="btn-email-action">📧 Email</button>
+                    <!-- <button class="btn-schedule-action">📅 Schedule</button> -->
+                    <button class="btn-primary-action">✓ Shortlist</button>
+                </div>
+            </div>
+
+            <div class="detail-grid">
+                <!-- Left Column -->
+                <div class="detail-left">
+                    <div class="info-card">
+                        <h3>Personal Information</h3>
+                        <div class="info-list">
+                            <div class="info-row"><span class="label">Full Name</span><span class="value">Tanaka
+                                    Yuki</span></div>
+                            <div class="info-row"><span class="label">Date of Birth</span><span class="value">March 15,
+                                    1995</span></div>
+                            <div class="info-row"><span class="label">Email</span><span
+                                    class="value">tanaka.yuki@email.com</span></div>
+                            <div class="info-row"><span class="label">Applied On</span><span class="value">January 8,
+                                    2026</span></div>
+                        </div>
+                    </div>
+
+                    <div class="info-card">
+                        <h3>Education & Background</h3>
+                        <div class="info-list">
+                            <div class="info-row"><span class="label">Highest Degree</span><span class="value">Master's
+                                    in CS</span></div>
+                            <div class="info-row"><span class="label">Experience</span><span class="value">5
+                                    years</span></div>
+                            <div class="info-row highlight"><span class="label">Course</span><span class="value">JLPT N2
+                                    - Upper Intermediate</span></div>
+                        </div>
+                    </div>
+
+                    <div class="info-card">
+                        <h3>Additional Comments</h3>
+                        <p class="comment-text">I have been learning Japanese for 2 years through self-study and online
+                            courses. I am very motivated to improve my language skills as I plan to relocate to Tokyo
+                            for work. My goal is to achieve JLPT N2 certification.</p>
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div class="detail-right">
+                    <div class="info-card">
+                        <h3>Resume / CV</h3>
+                        <div class="document-box">
+                            <div class="doc-preview">
+                                <div class="doc-thumb">📄</div>
+                                <div class="doc-details">
+                                    <strong>Tanaka_Yuki_Resume.pdf</strong>
+                                    <span>2.4 MB • Uploaded Jan 8</span>
+                                </div>
+                            </div>
+                            <div class="doc-actions">
+                                <button class="btn-sm outline">👁️ Preview</button>
+                                <button class="btn-sm primary">⬇️ Download</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-card">
+                        <h3>Update Status</h3>
+                        <div class="status-options">
+                            <label class="status-opt"><input type="radio" name="status" checked><span
+                                    class="opt new">New</span></label>
+                            <label class="status-opt"><input type="radio" name="status"><span class="opt review">Under
+                                    Review</span></label>
+                            <label class="status-opt"><input type="radio" name="status"><span
+                                    class="opt short">Shortlisted</span></label>
+                            <label class="status-opt"><input type="radio" name="status"><span
+                                    class="opt reject">Rejected</span></label>
+                        </div>
+                        <button class="btn-save">Save Status</button>
+                    </div>
+
+                    <div class="info-card danger-zone">
+                        <h3>Danger Zone</h3>
+                        <p>Permanently delete this application.</p>
+                        <button class="btn-danger">🗑️ Delete Application</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="nav-arrows">
+                <button class="arrow-btn">← Previous</button>
+                <button class="arrow-btn">Next →</button>
+            </div>
+        </div>
+    </main>
+
+    <a href="../index.html" class="back-link">← Back to Templates</a>
+</body>
+
+</html>

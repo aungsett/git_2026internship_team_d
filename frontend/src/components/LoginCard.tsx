@@ -17,6 +17,42 @@ type Props = {
   switchHref: string;
 };
 
+type Benefit = { icon: string; text: string };
+
+type VisualConfig = {
+  badge: string;
+  heading: string;
+  description: string;
+  benefits: Benefit[];
+};
+
+const VISUAL: Record<"user" | "admin", VisualConfig> = {
+  user: {
+    badge: "✨ Your Career Portal",
+    heading: "Track Your Applications Effortlessly",
+    description:
+      "Sign in to manage your job applications, update your profile, and stay connected with potential employers.",
+    benefits: [
+      { icon: "📋", text: "Submit and manage multiple applications" },
+      { icon: "🔔", text: "Get instant status updates and notifications" },
+      { icon: "📄", text: "Keep your resume and documents organized" },
+      { icon: "💼", text: "Connect with employers who match your skills" },
+    ],
+  },
+  admin: {
+    badge: "⚙️ Admin Portal",
+    heading: "Manage Your Recruitment Pipeline",
+    description:
+      "Access your dashboard to review candidates, track applications, and streamline your hiring workflow.",
+    benefits: [
+      { icon: "👥", text: "Review and filter candidate applications" },
+      { icon: "📈", text: "Track recruitment metrics and progress" },
+      { icon: "📅", text: "Schedule and manage interviews" },
+      { icon: "✅", text: "Shortlist and approve top candidates" },
+    ],
+  },
+};
+
 export default function LoginCard({
   loginType,
   title,
@@ -28,6 +64,8 @@ export default function LoginCard({
   switchHref,
 }: Props) {
   const router = useRouter();
+  const v = VISUAL[loginType];
+  const isAdmin = loginType === "admin";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -35,23 +73,19 @@ export default function LoginCard({
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // 🔐 LOGIN HANDLER
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
     try {
-      const data =
-        loginType === "admin"
-          ? await adminLoginRequest(email, password)
-          : await userLoginRequest(email, password);
+      const data = isAdmin
+        ? await adminLoginRequest(email, password)
+        : await userLoginRequest(email, password);
 
-      // Save token + role
       localStorage.setItem("token", data.token);
       localStorage.setItem("role", data.role);
 
-      // Redirect based on role
       if (data.role === "admin") {
         router.push("/admin-login/dashboard");
       } else {
@@ -65,118 +99,153 @@ export default function LoginCard({
     }
   };
 
+  const gradientPanel = isAdmin
+    ? "from-indigo-700 to-purple-600"
+    : "from-indigo-500 to-purple-400";
+  const btnGradient = isAdmin
+    ? "from-indigo-700 to-purple-600"
+    : "from-purple-400 to-indigo-500";
+
   return (
-    <form
-      onSubmit={handleSubmit}
-      style={{ color: "black", backgroundColor: "white" }}
-      className="w-full max-w-md rounded-2xl p-8 shadow-md"
-    >
-      {/* TITLE */}
-      <h1 className="text-3xl font-bold">{title}</h1>
-      <p className="mt-1 mb-6">{subtitle}</p>
-
-      {/* EMAIL */}
-      <div className="mb-4">
-        <label className="block text-sm font-medium mb-1">
-          {emailLabel}
-        </label>
-
-        <div className="relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2">📧</span>
-
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder={emailPlaceholder}
-            required
-            className="w-full border border-black rounded-lg pl-10 pr-4 py-3 focus:outline-none"
-          />
+    <div className="flex min-h-screen w-full bg-white">
+      {/* Visual Panel */}
+      <div
+        className={`hidden lg:flex flex-1 bg-linear-to-br ${gradientPanel} p-[60px] flex-col justify-center relative overflow-hidden`}
+      >
+        <div className="absolute -top-1/2 -right-1/2 w-full h-full bg-[radial-gradient(circle,rgba(255,255,255,0.12)_0%,transparent_60%)]" />
+        <div className="relative z-10 max-w-[500px] mx-auto">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/[0.18] rounded-[18px] text-white text-[0.8rem] font-semibold mb-5">
+            {v.badge}
+          </div>
+          <h1 className="text-[2.4rem] font-extrabold text-white mb-4 leading-[1.2]">
+            {v.heading}
+          </h1>
+          <p className="text-white/90 text-[1.05rem] leading-[1.7] mb-10">
+            {v.description}
+          </p>
+          {v.benefits.map((b, i) => (
+            <div
+              key={i}
+              className="flex items-center gap-3.5 py-4 px-5 bg-white/[0.12] rounded-[14px] mb-3.5 border border-white/[0.18]"
+            >
+              <div className="w-11 h-11 bg-white/[0.18] rounded-[10px] flex items-center justify-center text-[1.2rem] shrink-0">
+                {b.icon}
+              </div>
+              <div className="text-white text-[0.95rem] font-medium">
+                {b.text}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* PASSWORD */}
-      <div className="mb-6">
-        <label className="block text-sm font-medium mb-1">
-          Password
-        </label>
+      {/* Form Panel */}
+      <div className="flex-1 w-full min-w-0 p-4 sm:p-6 lg:p-10 xl:p-[60px] flex flex-col justify-center items-center bg-white">
+        <div className="w-full max-w-[420px] min-w-0">
+          <div className="mb-8">
+            <div className="mb-6 font-extrabold text-2xl flex items-center gap-2 text-[#0f172a]">
+              🎯 RecruitPro
+            </div>
+            {isAdmin && (
+              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-linear-to-r from-indigo-600/10 to-purple-600/10 rounded-2xl text-[0.75rem] font-semibold text-indigo-600 mb-3.5">
+                🔐 Admin Portal
+              </div>
+            )}
+            <h2 className="text-[1.8rem] font-bold text-[#0f172a] mb-2">
+              {title}
+            </h2>
+            <p className="text-[#64748b] text-[0.95rem]">{subtitle}</p>
+          </div>
 
-        <div className="relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2">🔒</span>
+          <form onSubmit={handleSubmit}>
+            <div className="mb-6">
+              <label className="text-[0.85rem] font-semibold text-[#374151] mb-2 block">
+                {emailLabel}
+              </label>
+              <div className="relative">
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[1.1rem] text-[#94a3b8]">
+                  ✉️
+                </span>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder={emailPlaceholder}
+                  required
+                  className="w-full py-3.5 pr-3.5 pl-11 border border-[#e2e8f0] rounded-xl text-[0.95rem] outline-none transition-all duration-200 focus:border-indigo-500 focus:shadow-[0_0_0_4px_rgba(99,102,241,0.1)] text-[#1e293b]"
+                />
+              </div>
+            </div>
 
-          <input
-            type={showPassword ? "text" : "password"}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Enter password"
-            required
-            className="w-full border border-black rounded-lg pl-10 pr-10 py-3 focus:outline-none"
-          />
+            <div className="mb-6">
+              <label className="text-[0.85rem] font-semibold text-[#374151] mb-2 block">
+                Password
+              </label>
+              <div className="relative">
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[1.1rem] text-[#94a3b8]">
+                  🔒
+                </span>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter password"
+                  required
+                  className="w-full py-3.5 px-11 border border-[#e2e8f0] rounded-xl text-[0.95rem] outline-none transition-all duration-200 focus:border-indigo-500 focus:shadow-[0_0_0_4px_rgba(99,102,241,0.1)] text-[#1e293b]"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer text-[#94a3b8] text-[1.1rem]"
+                >
+                  {showPassword ? "🙈" : "👁️"}
+                </button>
+              </div>
+            </div>
 
-          {/* SHOW / HIDE PASSWORD */}
+            {error && (
+              <p className="text-red-500 text-sm mb-3 text-center">{error}</p>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className={`w-full py-4 bg-linear-to-r ${btnGradient} border-none rounded-[14px] text-white font-semibold cursor-pointer transition-all duration-300 flex items-center justify-center gap-2 mt-2.5 hover:-translate-y-0.5 hover:shadow-[0_16px_32px_rgba(99,102,241,0.35)] disabled:opacity-50`}
+            >
+              {loading ? "Logging in..." : `${buttonText} →`}
+            </button>
+          </form>
+
           <button
             type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2"
+            onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+            className="w-full py-4 bg-linear-to-r from-purple-400 to-indigo-500 border-none rounded-[14px] text-white font-semibold cursor-pointer transition-all duration-300 flex items-center justify-center gap-2 mt-4 hover:-translate-y-0.5 hover:shadow-[0_16px_32px_rgba(99,102,241,0.35)]"
           >
-            {showPassword ? "👁" : "🙈"}
+            Continue with Google
           </button>
+
+          <div className="text-center mt-6">
+            <p className="text-sm text-[#64748b]">
+              Don&apos;t have an account?{" "}
+              <Link
+                href="/signup"
+                className="text-indigo-600 font-medium hover:underline"
+              >
+                Sign up
+              </Link>
+            </p>
+          </div>
+
+          <div className="text-center mt-7 pt-6 border-t border-[#e2e8f0]">
+            <Link
+              href={switchHref}
+              className="text-[#64748b] text-[0.9rem] font-medium transition-colors duration-200 hover:text-indigo-500 no-underline"
+            >
+              {switchText}
+            </Link>
+          </div>
         </div>
       </div>
-
-      {/* ERROR MESSAGE */}
-      {error && (
-        <p className="text-red-500 text-sm mb-3 text-center">{error}</p>
-      )}
-
-      {/* LOGIN BUTTON */}
-      <button
-        type="submit"
-        disabled={loading}
-        style={{
-          background: "linear-gradient(135deg, #a78bfa, #6366f1)",
-          color: "white",
-        }}
-        className="w-full py-3 rounded-lg font-semibold disabled:opacity-50"
-      >
-        {loading ? "Logging in..." : buttonText}
-      </button>
-
-       <button
-  type="button"
-  onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
-  style={{
-    background: "linear-gradient(135deg, #a78bfa, #6366f1)",
-    color: "white",
-  }}
-  className="w-full py-3 rounded-lg font-semibold mt-4"
->
-  Continue with Google
-</button>
-
-      {/* BOTTOM LINKS */}
-      <div className="mt-6 text-center">
-        <p className="text-sm text-gray-600">
-          Don’t have an account?{" "}
-          <Link
-            href="/signup"
-            className="text-indigo-600 font-medium hover:underline"
-          >
-            Sign up
-          </Link>
-        </p>
-
-        <div className="flex items-center my-6">
-          <div className="flex-grow border-t border-gray-300"></div>
-        </div>
-
-        <Link
-          href={switchHref}
-          className="text-gray-700 hover:text-indigo-600 transition"
-        >
-          {switchText}
-        </Link>
-      </div>
-    </form>
+    </div>
   );
 }

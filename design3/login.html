@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Applicant Login - RecruitPro ATS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body,
+        html {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        .login-page {
+            min-height: 100vh;
+            display: flex;
+            width: 100%;
+        }
+
+        /* Full screen split layout modifications */
+        .login-container {
+            display: flex;
+            width: 100%;
+            min-height: 100vh;
+            background: #fff;
+            align-items: stretch;
+        }
+
+        .login-visual {
+            flex: 1;
+            background: linear-gradient(135deg, #6366f1, #a78bfa);
+            padding: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-visual::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.12) 0%, transparent 60%);
+        }
+
+        .visual-content {
+            position: relative;
+            z-index: 1;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .visual-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.18);
+            border-radius: 18px;
+            color: #fff;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 22px;
+        }
+
+        .visual-content h1 {
+            font-size: 2.4rem;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 16px;
+            line-height: 1.2;
+        }
+
+        .visual-content p {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.05rem;
+            line-height: 1.7;
+            margin-bottom: 40px;
+        }
+
+        .benefit-card {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px 20px;
+            background: rgba(255, 255, 255, 0.12);
+            border-radius: 14px;
+            margin-bottom: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+
+        .benefit-icon {
+            width: 44px;
+            height: 44px;
+            background: rgba(255, 255, 255, 0.18);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .benefit-text {
+            color: #fff;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .login-form-area {
+            flex: 1;
+            padding: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: #fff;
+        }
+
+        .login-form-wrapper {
+            width: 100%;
+            max-width: 420px;
+        }
+
+        .login-header {
+            margin-bottom: 30px;
+        }
+
+        .login-header .logo {
+            margin-bottom: 24px;
+            font-weight: 800;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #0f172a;
+        }
+
+        .login-header h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 8px;
+        }
+
+        .login-header p {
+            color: #64748b;
+            font-size: 0.95rem;
+        }
+
+        .login-form .form-group {
+            margin-bottom: 24px;
+            width: 100%;
+        }
+
+        .login-form label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .input-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        /* Added width: 100% and box-sizing */
+        .input-wrapper .form-input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 14px 14px 14px 44px;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+            outline: none;
+        }
+
+        .input-wrapper .form-input:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        }
+
+        .input-wrapper .icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.1rem;
+            color: #94a3b8;
+        }
+
+        .input-wrapper .toggle-pw {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #94a3b8;
+            font-size: 1.1rem;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #a78bfa, #6366f1);
+            border: none;
+            border-radius: 14px;
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 16px 32px rgba(99, 102, 241, 0.35);
+        }
+
+        .admin-link {
+            text-align: center;
+            margin-top: 28px;
+            padding-top: 24px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .admin-link a {
+            color: #64748b;
+            font-size: 0.9rem;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .admin-link a:hover {
+            color: #6366f1;
+        }
+
+        @media (max-width: 900px) {
+            .login-container {
+                flex-direction: column;
+            }
+
+            .login-visual {
+                display: none;
+            }
+
+            .login-form-area {
+                padding: 40px 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="login-page">
+        <div class="login-container">
+            <div class="login-visual">
+                <div class="visual-content">
+                    <div class="visual-badge">✨ Your Career Portal</div>
+                    <h1>Track Your Applications Effortlessly</h1>
+                    <p>Sign in to manage your job applications, update your profile, and stay connected with potential
+                        employers.</p>
+                    <div class="benefit-card">
+                        <div class="benefit-icon">📋</div>
+                        <div class="benefit-text">Submit and manage multiple applications</div>
+                    </div>
+                    <div class="benefit-card">
+                        <div class="benefit-icon">🔔</div>
+                        <div class="benefit-text">Get instant status updates and notifications</div>
+                    </div>
+                    <div class="benefit-card">
+                        <div class="benefit-icon">📄</div>
+                        <div class="benefit-text">Keep your resume and documents organized</div>
+                    </div>
+                    <div class="benefit-card">
+                        <div class="benefit-icon">💼</div>
+                        <div class="benefit-text">Connect with employers who match your skills</div>
+                    </div>
+                </div>
+            </div>
+            <div class="login-form-area">
+                <div class="login-form-wrapper">
+                    <div class="login-header">
+                        <div class="logo">🎯 RecruitPro</div>
+                        <h2>Applicant Login</h2>
+                        <p>Sign in or create your account</p>
+                    </div>
+                    <form class="login-form" id="loginForm">
+                        <div class="form-group"><label>Email Address</label>
+                            <div class="input-wrapper"><span class="icon">✉️</span><input type="email"
+                                    class="form-input" placeholder="you@email.com" required id="emailInput"></div>
+                        </div>
+                        <div class="form-group"><label>Password</label>
+                            <div class="input-wrapper"><span class="icon">🔒</span><input type="password"
+                                    class="form-input" placeholder="Enter password" required id="passwordInput"><button
+                                    type="button" class="toggle-pw" onclick="togglePassword()">👁️</button></div>
+                        </div>
+                        <button type="submit" class="btn-login">Continue →</button>
+                    </form>
+                    <div class="admin-link"><a href="admin-login.html">Admin Login →</a></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <a href="../index.html" class="back-link"
+        style="position: absolute; bottom: 20px; left: 20px; z-index: 10; opacity: 0.3; color: #000; text-decoration: none;">←
+        Back</a>
+    <script>
+        function togglePassword() { const p = document.getElementById('passwordInput'); const t = document.querySelector('.toggle-pw'); if (p.type === 'password') { p.type = 'text'; t.textContent = '🙈'; } else { p.type = 'password'; t.textContent = '👁️'; } }
+        document.getElementById('loginForm').addEventListener('submit', function (e) { e.preventDefault(); window.location.href = 'applicant-detail.html'; });
+    </script>
+</body>
+
+</html>

@@ -121,26 +121,45 @@ router.post('/applications', authenticateToken, upload.single('cv_file'), async 
     await client.query('BEGIN');
 
     const { 
+        full_name,
         phone_number, location, date_of_birth, 
         highest_degree, field_of_study, university, graduation_year, 
         gpa_percentage, years_experience, current_job_title, 
-        company_name, industry, professional_summary, course_id 
+        company_name, industry, professional_summary, course_id,
+        course_schedule
     } = req.body;
 
+    // Get full_name from users if not provided (e.g. from JWT/session later)
+    let applicantFullName = full_name;
+    if (!applicantFullName) {
+      const userRow = await client.query('SELECT full_name FROM users WHERE user_id = $1', [req.user.user_id]);
+      applicantFullName = userRow.rows[0]?.full_name || 'Applicant';
+    }
+
     const applicantRes = await client.query(
-      `INSERT INTO applicants (user_id, phone_number, location, date_of_birth, highest_degree, field_of_study, university, graduation_year, gpa_percentage, years_experience, current_job_title, company_name, industry, professional_summary)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+      `INSERT INTO applicants (user_id, full_name, phone_number, location, date_of_birth, highest_degree, field_of_study, university, graduation_year, gpa_percentage, years_experience, current_job_title, company_name, industry, professional_summary)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
        ON CONFLICT (user_id) DO UPDATE SET 
-       phone_number = EXCLUDED.phone_number, location = EXCLUDED.location
+       full_name = EXCLUDED.full_name, phone_number = EXCLUDED.phone_number, location = EXCLUDED.location,
+       date_of_birth = EXCLUDED.date_of_birth, highest_degree = EXCLUDED.highest_degree, field_of_study = EXCLUDED.field_of_study,
+       university = EXCLUDED.university, graduation_year = EXCLUDED.graduation_year, gpa_percentage = EXCLUDED.gpa_percentage,
+       years_experience = EXCLUDED.years_experience, current_job_title = EXCLUDED.current_job_title,
+       company_name = EXCLUDED.company_name, industry = EXCLUDED.industry, professional_summary = EXCLUDED.professional_summary
        RETURNING applicant_id`,
-      [req.user.user_id, phone_number, location, date_of_birth, highest_degree, field_of_study, university, graduation_year, gpa_percentage, years_experience, current_job_title, company_name, industry, professional_summary]
+      [req.user.user_id, applicantFullName, phone_number, location, date_of_birth, highest_degree, field_of_study, university, graduation_year, gpa_percentage, years_experience, current_job_title, company_name, industry, professional_summary]
     );
     
     const applicant_id = applicantRes.rows[0].applicant_id;
 
+    let finalCourseId = course_id && String(course_id).trim() ? parseInt(course_id, 10) : null;
+    if (finalCourseId == null || isNaN(finalCourseId)) {
+      const firstCourse = await client.query('SELECT course_id FROM courses LIMIT 1');
+      finalCourseId = firstCourse.rows[0]?.course_id || 1;
+    }
+
     const appRes = await client.query(
-      'INSERT INTO applications (applicant_id, course_id, status) VALUES ($1, $2, $3) RETURNING application_id',
-      [applicant_id, course_id, 'New']
+      'INSERT INTO applications (applicant_id, course_id, course_schedule, status) VALUES ($1, $2, $3, $4) RETURNING application_id',
+      [applicant_id, finalCourseId, course_schedule || null, 'New']
     );
     const application_id = appRes.rows[0].application_id;
 
@@ -152,7 +171,8 @@ router.post('/applications', authenticateToken, upload.single('cv_file'), async 
     }
 
     await client.query('COMMIT');
-    res.status(201).json({ message: 'Application submitted successfully', application_id });
+    const ref = `APP-${new Date().getFullYear()}-${String(application_id).padStart(5, '0')}`;
+    res.status(201).json({ message: 'Application submitted successfully', application_id, application_ref: ref });
   } catch (err) {
     await client.query('ROLLBACK');
     res.status(500).json({ error: err.message });
@@ -222,9 +242,9 @@ router.get('/admin/applications/:id', authenticateToken, isAdmin, async (req, re
   try {
     const { id } = req.params;
     const query = `
-      SELECT a.application_id, a.status, a.applied_on, 
+      SELECT a.application_id, a.status, a.applied_on, a.course_schedule,
              u.full_name, u.email,
-             ap.*, -- Get ALL profile details
+             ap.*,
              c.course_name, c.course_level,
              d.file_path as cv_link, d.file_name
       FROM applications a

@@ -35,9 +35,12 @@ CREATE TABLE IF NOT EXISTS applications (
     application_id SERIAL PRIMARY KEY,
     applicant_id INT NOT NULL REFERENCES applicants(applicant_id) ON DELETE CASCADE,
     course_id INT NOT NULL REFERENCES courses(course_id),
+    course_schedule VARCHAR(50),
     status VARCHAR(50) DEFAULT 'New' CHECK (status IN ('New', 'Under Review', 'Shortlisted', 'Rejected')),
     applied_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+-- For existing DBs created before course_schedule was added:
+ALTER TABLE applications ADD COLUMN IF NOT EXISTS course_schedule VARCHAR(50);
 
 CREATE TABLE IF NOT EXISTS documents (
     document_id SERIAL PRIMARY KEY,

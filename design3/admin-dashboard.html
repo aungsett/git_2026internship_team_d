@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Fresh Minimal | ATS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+
+<body>
+    <nav class="nav">
+        <div class="logo"><span class="logo-icon">🎌</span> NihonGo Academy</div>
+        <div class="nav-links">
+            <a href="applicant-form.html">Apply</a>
+            <a href="#" class="active">Dashboard</a>
+            <a href="../index.html">Templates</a>
+        </div>
+    </nav>
+
+    <main class="dashboard">
+        <div class="dash-header">
+            <div>
+                <h1>Applicant Dashboard</h1>
+                <p>Track and manage all applications</p>
+            </div>
+            <div class="dash-actions">
+                <button class="btn-outline" onclick="exportCSV()">📥 Export CSV</button>
+                <button class="btn-primary">+ Add Applicant</button>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-row">
+            <div class="stat-card purple">
+                <div class="stat-content">
+                    <span class="stat-label">Total Applications</span>
+                    <span class="stat-value">1,247</span>
+                    <span class="stat-change up">↑ 12% from last month</span>
+                </div>
+                <div class="stat-icon">📊</div>
+            </div>
+            <div class="stat-card blue">
+                <div class="stat-content">
+                    <span class="stat-label">This Week</span>
+                    <span class="stat-value">48</span>
+                    <span class="stat-change up">↑ 8% from last week</span>
+                </div>
+                <div class="stat-icon">📈</div>
+            </div>
+            <div class="stat-card green">
+                <div class="stat-content">
+                    <span class="stat-label">Shortlisted</span>
+                    <span class="stat-value">156</span>
+                    <span class="stat-change up">↑ 23% increase</span>
+                </div>
+                <div class="stat-icon">✅</div>
+            </div>
+            <div class="stat-card orange">
+                <div class="stat-content">
+                    <span class="stat-label">Pending Review</span>
+                    <span class="stat-value">89</span>
+                    <span class="stat-change">Needs attention</span>
+                </div>
+                <div class="stat-icon">⏳</div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filter-bar">
+            <div class="search-input">
+                <span>🔍</span>
+                <input type="text" placeholder="Search by name, email...">
+            </div>
+            <div class="filter-group">
+                <select class="filter-select">
+                    <option>All Status</option>
+                    <option>New</option>
+                    <option>Under Review</option>
+                    <option>Shortlisted</option>
+                    <option>Rejected</option>
+                </select>
+                <select class="filter-select">
+                    <option>All Courses</option>
+                    <option>JLPT N5-N1</option>
+                    <option>Business Japanese</option>
+                </select>
+                <select class="filter-select">
+                    <option>All Education</option>
+                    <option>Bachelor's</option>
+                    <option>Master's</option>
+                    <option>Doctorate</option>
+                </select>
+            </div>
+            <span class="selection-info"><span id="selectedCount">0</span> selected</span>
+        </div>
+
+        <!-- Table -->
+        <div class="table-card">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" id="selectAll"></th>
+                        <th>Applicant</th>
+                        <th>Education</th>
+                        <th>Experience</th>
+                        <th>Course</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr onclick="viewApplicant(1)">
+                        <td><input type="checkbox" class="row-check" onclick="event.stopPropagation()"></td>
+                        <td>
+                            <div class="user-info">
+                                <div class="avatar purple">TY</div>
+                                <div><strong>Tanaka Yuki</strong><span>tanaka.yuki@email.com</span></div>
+                            </div>
+                        </td>
+                        <td>Master's</td>
+                        <td>5 years</td>
+                        <td><span class="tag purple">JLPT N2</span></td>
+                        <td><span class="status new">New</span></td>
+                        <td>Jan 8, 2026</td>
+                        <td><button class="btn-view">View</button></td>
+                    </tr>
+                    <tr onclick="viewApplicant(2)">
+                        <td><input type="checkbox" class="row-check" onclick="event.stopPropagation()"></td>
+                        <td>
+                            <div class="user-info">
+                                <div class="avatar pink">SK</div>
+                                <div><strong>Suzuki Ken</strong><span>s.ken@email.com</span></div>
+                            </div>
+                        </td>
+                        <td>Bachelor's</td>
+                        <td>3 years</td>
+                        <td><span class="tag purple">JLPT N3</span></td>
+                        <td><span class="status review">Review</span></td>
+                        <td>Jan 7, 2026</td>
+                        <td><button class="btn-view">View</button></td>
+                    </tr>
+                    <tr onclick="viewApplicant(3)">
+                        <td><input type="checkbox" class="row-check" onclick="event.stopPropagation()"></td>
+                        <td>
+                            <div class="user-info">
+                                <div class="avatar green">MH</div>
+                                <div><strong>Mori Hana</strong><span>mori.hana@email.com</span></div>
+                            </div>
+                        </td>
+                        <td>Doctorate</td>
+                        <td>8 years</td>
+                        <td><span class="tag purple">Business</span></td>
+                        <td><span class="status short">Shortlisted</span></td>
+                        <td>Jan 6, 2026</td>
+                        <td><button class="btn-view">View</button></td>
+                    </tr>
+                    <tr onclick="viewApplicant(4)">
+                        <td><input type="checkbox" class="row-check" onclick="event.stopPropagation()"></td>
+                        <td>
+                            <div class="user-info">
+                                <div class="avatar blue">NA</div>
+                                <div><strong>Nakamura Aoi</strong><span>aoi@email.com</span></div>
+                            </div>
+                        </td>
+                        <td>Bachelor's</td>
+                        <td>2 years</td>
+                        <td><span class="tag purple">JLPT N4</span></td>
+                        <td><span class="status new">New</span></td>
+                        <td>Jan 5, 2026</td>
+                        <td><button class="btn-view">View</button></td>
+                    </tr>
+                    <tr onclick="viewApplicant(5)">
+                        <td><input type="checkbox" class="row-check" onclick="event.stopPropagation()"></td>
+                        <td>
+                            <div class="user-info">
+                                <div class="avatar orange">YS</div>
+                                <div><strong>Yamamoto Sakura</strong><span>sakura@email.com</span></div>
+                            </div>
+                        </td>
+                        <td>Master's</td>
+                        <td>6 years</td>
+                        <td><span class="tag purple">JLPT N1</span></td>
+                        <td><span class="status reject">Rejected</span></td>
+                        <td>Jan 4, 2026</td>
+                        <td><button class="btn-view">View</button></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="table-footer">
+                <span>Showing 1-5 of 156 applicants</span>
+                <div class="pagination">
+                    <button>←</button>
+                    <button class="active">1</button>
+                    <button>2</button>
+                    <button>3</button>
+                    <button>...</button>
+                    <button>32</button>
+                    <button>→</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <a href="../index.html" class="back-link">← Back to Templates</a>
+    <script src="scripts.js"></script>
+</body>
+
+</html>
