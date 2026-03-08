@@ -1,7 +1,38 @@
+# Dependencies
 node_modules/
+
+# Environment (keep .env.example committed)
 .env
 .env.local
 .env.*.local
+.env.development
+.env.production
+.env.test
+
+# Uploaded files (CVs/resumes)
 uploads/
+
+# Logs
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS
 .DS_Store
+Thumbs.db
+
+# IDE / editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Test / coverage
+coverage/
+.nyc_output/
+
+# Optional local config
+*.local
