@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * Admin applicant detail page: full application info, CV download, and status update (New / Under Review / Shortlisted / Rejected).
+ * Requires admin token; redirects to /admin-login if missing.
+ */
+
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
@@ -38,6 +43,7 @@ export default function ApplicantDetailPage() {
       .finally(() => setLoading(false));
   }, [id, router]);
 
+  /** Updates application status via API and refreshes local detail. */
   const handleStatusChange = async (newStatus: string) => {
     if (!id) return;
     setStatusUpdating(true);
@@ -51,6 +57,7 @@ export default function ApplicantDetailPage() {
     }
   };
 
+  /** Fetches CV as blob and triggers browser download. */
   const handleDownloadCv = async () => {
     if (!id) return;
     setCvDownloading(true);
@@ -357,6 +364,7 @@ export default function ApplicantDetailPage() {
   );
 }
 
+/** Section card with title and border for detail layout. */
 function InfoCard({
   title,
   children,
@@ -374,6 +382,7 @@ function InfoCard({
   );
 }
 
+/** Single label-value row; optional highlight style. Renders nothing if value is null/empty. */
 function InfoRow({
   label,
   value,

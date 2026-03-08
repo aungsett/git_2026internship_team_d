@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+/** Terms & Conditions and Privacy Policy page; linked from signup and application review. */
 export default function TermsPage() {
   return (
     <div className="min-h-screen text-[#1e293b]">
@@ -78,6 +79,7 @@ export default function TermsPage() {
   );
 }
 
+/** Renders a numbered section (e.g. "01 Account Responsibility") in the terms content. */
 function Section({
   num,
   title,

@@ -1,3 +1,8 @@
+/**
+ * Next.js API route: POST /api/login/user
+ * Proxies applicant login to backend /auth/login. Rejects if backend returns admin role (use admin login page).
+ */
+
 import { NextResponse } from "next/server";
 
 const BACKEND_BASE_URL = (
@@ -21,6 +26,7 @@ type LoginResponse = {
   actionText?: string;
 };
 
+/** Forwards email/password to backend; returns 403 with redirectTo /admin-login if role is admin. */
 export async function POST(req: Request) {
   try {
     const body = (await req.json()) as LoginBody;

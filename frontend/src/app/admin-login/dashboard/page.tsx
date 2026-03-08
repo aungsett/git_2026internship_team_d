@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * Admin dashboard: stats cards, filters (search, status, course), applications table, CSV export.
+ * Requires admin token; redirects to /admin-login if missing. Row click navigates to applicant detail.
+ */
+
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -83,6 +88,7 @@ export default function AdminDashboard() {
     };
   }, [search, statusFilter, courseFilter]);
 
+  /** Triggers CSV download using blob from admin export API. */
   const handleExportCsv = () => {
     getAdminExportCsv()
       .then((blob) => {
@@ -95,6 +101,7 @@ export default function AdminDashboard() {
       .catch(() => setError("Export failed"));
   };
 
+  /** Clears token/role and redirects to admin login. */
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
@@ -387,6 +394,7 @@ export default function AdminDashboard() {
   );
 }
 
+/** Renders application status with color-coded pill (New, Under Review, Shortlisted, Rejected). */
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
     New: "bg-[#e0e7ff] text-[#4f46e5]",

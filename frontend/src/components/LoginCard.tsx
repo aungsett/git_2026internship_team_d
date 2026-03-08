@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * LoginCard — Reusable login UI for both applicant and admin.
+ * Renders a split layout: left panel (benefits/visual), right panel (email + password form).
+ * On success stores token and role in localStorage and redirects to /dashboard or /admin-login/dashboard.
+ */
+
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -73,6 +79,7 @@ export default function LoginCard({
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  /** Calls user or admin login API; on success stores token/role and redirects by role. */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");

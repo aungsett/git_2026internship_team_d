@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * Multi-step application form: Personal Info → Education → Experience → Course → Documents → Review.
+ * Requires login (redirects if no token). Loads courses from API; submits via submitApplication with CV file.
+ */
+
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -19,7 +24,7 @@ const FULL_NAME_MIN = 2;
 const FULL_NAME_MAX = 100;
 const YEARS_EXPERIENCE_MAX = 40;
 
-// Practical RFC 5322-style email validation (covers common valid formats)
+/** Practical email validation (covers common valid formats). */
 function isValidEmail(email: string): boolean {
   if (!email || email.length > 254) return false;
   const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -130,6 +135,7 @@ export default function ApplicantApplyPage() {
     if (fieldErrors[name]) setFieldErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
+  /** Validates the current step; sets field errors and returns true only if step is valid. */
   const validateStep = (step: number): boolean => {
     setError("");
     const errors: Record<string, string> = {};
@@ -290,6 +296,7 @@ export default function ApplicantApplyPage() {
     }
   };
 
+  /** Submits the full application (step 6 must be valid and terms agreed). */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateStep(6)) return;
@@ -1007,6 +1014,7 @@ export default function ApplicantApplyPage() {
   );
 }
 
+/** Reusable form input with label, optional required marker, and error message. */
 function FormField({
   label,
   name,
@@ -1046,6 +1054,7 @@ function FormField({
   );
 }
 
+/** Displays a single label/value pair in the review step. */
 function ReviewField({ label, value }: { label: string; value: string }) {
   return (
     <div className="bg-[#f8fafc] rounded-xl px-4 py-3 border border-[#f1f5f9]">
@@ -1055,6 +1064,7 @@ function ReviewField({ label, value }: { label: string; value: string }) {
   );
 }
 
+/** Formats a date string for display in the review section. */
 function formatReviewDate(dateStr: string): string {
   try {
     const d = new Date(dateStr + "T00:00:00");

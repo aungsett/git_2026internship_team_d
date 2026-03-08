@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * Signup page: registration form (full name, email, password, confirm, terms checkbox).
+ * Validates client-side and calls registerRequest; on success shows confirmation and redirects to applicant login.
+ */
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -57,6 +62,7 @@ export default function SignupPage() {
     };
   }, [success, router]);
 
+  /** Client-side validation: required fields, email format, password strength, match, terms. */
   const validate = () => {
     const newErrors: FormErrors = {};
 
@@ -84,6 +90,7 @@ export default function SignupPage() {
     return Object.keys(newErrors).length === 0;
   };
 
+  /** Submit registration; on success sets success state (triggers redirect after delay). */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;

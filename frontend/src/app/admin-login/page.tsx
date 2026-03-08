@@ -1,5 +1,6 @@
 import LoginCard from "@/components/LoginCard";
 
+/** Admin login page: uses LoginCard with admin flow and link back to applicant login. */
 export default function AdminLogin() {
   return (
     <LoginCard

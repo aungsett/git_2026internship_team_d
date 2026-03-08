@@ -1,3 +1,8 @@
+/**
+ * Root layout for the RecruitPro ATS Next.js app.
+ * Applies Plus Jakarta Sans font, global styles, and wraps the app in SessionProvider (NextAuth).
+ */
+
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";

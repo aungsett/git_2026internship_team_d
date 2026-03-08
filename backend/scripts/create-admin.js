@@ -20,6 +20,7 @@ const pool = new Pool({
   port: parseInt(process.env.DB_PORT || '5432', 10),
 });
 
+/** Creates or updates admin user in DB; verifies password and prints login instructions. */
 async function main() {
   const email = process.argv[2] || 'admin@ats.com';
   const password = process.argv[3] || 'Admin@123';

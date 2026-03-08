@@ -1,3 +1,8 @@
+/**
+ * PostgreSQL connection pool for the ATS backend.
+ * Used by routes and scripts; configure via .env (DB_USER, DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT).
+ */
+
 const { Pool } = require('pg');
 require('dotenv').config();
 

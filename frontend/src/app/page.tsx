@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+/** Landing page: hero for Japanese language programs, primary CTA (Apply / Sign up), and links to Login, Terms. */
 export default function Home() {
   return (
     <div className="min-h-screen text-[#1e293b] bg-[#f8fafc]">

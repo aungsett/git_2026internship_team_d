@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * Applicant dashboard: post-login hub with link to apply and logout.
+ * Redirects to /login if no token is present.
+ */
+
 import { useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -14,6 +19,7 @@ export default function ApplicantDashboard() {
     }
   }, [router]);
 
+  /** Clears token/role from localStorage and redirects to applicant login. */
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("role");

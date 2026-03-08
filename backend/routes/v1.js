@@ -1,3 +1,11 @@
+/**
+ * API v1 routes for the ATS backend.
+ * - Auth: register, login, Google OAuth
+ * - Public: GET /courses
+ * - Applicant (authenticated): POST /applications (with CV upload)
+ * - Admin (authenticated + isAdmin): applications list/detail, status update, stats, CSV export, CV download
+ */
+
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
@@ -7,18 +15,18 @@ const path = require('path');
 const pool = require('../db');
 const { authenticateToken, isAdmin } = require('../middleware/auth');
 
-
-
-//file uploads
+// --- File upload (CV/Resume) ---
+// Files saved to backend/uploads/ with timestamp prefix; max 5MB per file
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, 'uploads/'),
   filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
 });
-const upload = multer({ 
-    storage: storage, 
-    limits: { fileSize: 5 * 1024 * 1024 } // 5MB Limit
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
 });
 
+/** POST /auth/google — Create or find user by Google email, return JWT and role */
 router.post("/auth/google", async (req, res) => {
   const { full_name, email } = req.body;
 
@@ -56,7 +64,7 @@ router.post("/auth/google", async (req, res) => {
   }
 });
 
-//register 
+/** POST /auth/register — Create new applicant user (full_name, email, password). Returns created user row. */
 router.post('/auth/register', async (req, res) => {
   const { full_name, email, password } = req.body;
 
@@ -80,7 +88,7 @@ router.post('/auth/register', async (req, res) => {
   }
 });
 
-//login
+/** POST /auth/login — Email/password login. Returns { token, role }. Used for both applicant and admin (role checked on frontend). */
 router.post('/auth/login', async (req, res) => {
   const { email, password } = req.body;
   try {
@@ -102,8 +110,9 @@ router.post('/auth/login', async (req, res) => {
 
 
 
-//applicant endpoints 
-// Get courses
+// --- Applicant / public endpoints ---
+
+/** GET /courses — List all courses (for application form dropdown). No auth required. */
 router.get('/courses', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM courses');
@@ -114,7 +123,7 @@ router.get('/courses', async (req, res) => {
 });
 
 
-//submit application
+/** POST /applications — Submit application (authenticated). Creates/updates applicant, creates application and optional document. Expects multipart with cv_file. */
 router.post('/applications', authenticateToken, upload.single('cv_file'), async (req, res) => {
   const client = await pool.connect();
   try {
@@ -182,7 +191,9 @@ router.post('/applications', authenticateToken, upload.single('cv_file'), async 
 });
 
 
-//dashboard applicants view
+// --- Admin endpoints (require authenticateToken + isAdmin) ---
+
+/** GET /admin/applications — List applications with optional query: search, status, course_id */
 router.get('/admin/applications', authenticateToken, isAdmin, async (req, res) => {
   try {
     const { search, status, course_id } = req.query;
@@ -237,7 +248,7 @@ router.get('/admin/applications', authenticateToken, isAdmin, async (req, res) =
   }
 });
 
-//single applicant view
+/** GET /admin/applications/:id — Full application + applicant + user + course + document for one application */
 router.get('/admin/applications/:id', authenticateToken, isAdmin, async (req, res) => {
   try {
     const { id } = req.params;
@@ -267,7 +278,7 @@ router.get('/admin/applications/:id', authenticateToken, isAdmin, async (req, re
   }
 });
 
-//get cv alone 
+/** GET /admin/applications/:id/cv — Download CV file for application (attachment) */
 router.get('/admin/applications/:id/cv', authenticateToken, isAdmin, async (req, res) => {
   try {
     const { id } = req.params;
@@ -288,7 +299,7 @@ router.get('/admin/applications/:id/cv', authenticateToken, isAdmin, async (req,
   }
 });
 
-// update status
+/** PATCH /admin/applications/:id/status — Update application status and log change in status_history */
 router.patch('/admin/applications/:id/status', authenticateToken, isAdmin, async (req, res) => {
   const client = await pool.connect();
   try {
@@ -320,7 +331,7 @@ router.patch('/admin/applications/:id/status', authenticateToken, isAdmin, async
   }
 });
 
-//dashboard stats 
+/** GET /admin/stats — Aggregates: total_applications, this_week, shortlisted, pending_review */
 router.get('/admin/stats', authenticateToken, isAdmin, async (req, res) => {
   try {
     const query = `
@@ -339,7 +350,7 @@ router.get('/admin/stats', authenticateToken, isAdmin, async (req, res) => {
   }
 });
 
-//export csv
+/** GET /admin/export/csv — Export all applications as CSV (attachment) */
 router.get('/admin/export/csv', authenticateToken, isAdmin, async (req, res) => {
   try {
     const query = `

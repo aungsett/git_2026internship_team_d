@@ -1,4 +1,7 @@
-// src/app/api/auth/[...nextauth]/route.ts
+/**
+ * NextAuth catch-all route: handles sign-in (e.g. Google), JWT/session.
+ * On sign-in, calls backend POST /auth/google with name/email and stores backend token + role in JWT/session.
+ */
 import NextAuth, { DefaultSession } from "next-auth";
 import { JWT as DefaultJWT } from "next-auth/jwt";
 import GoogleProvider from "next-auth/providers/google";

@@ -1,3 +1,9 @@
+/**
+ * Frontend API client for the ATS backend.
+ * - Login goes through Next.js API routes (/api/login/user, /api/login/admin) which proxy to backend.
+ * - Other calls use API_URL (backend base). NEXT_PUBLIC_API_URL can override for production.
+ */
+
 const API_URL = typeof window !== "undefined"
   ? "http://localhost:5000/api/v1"
   : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1");
@@ -26,6 +32,7 @@ export class LoginApiError extends Error {
 }
 
 
+/** Shared login helper: POSTs to given Next.js API path (user or admin), returns token and role or throws. */
 async function loginByPath(path: string, email: string, password: string): Promise<LoginResponse> {
   const res = await fetch(path, {
     method: "POST",
