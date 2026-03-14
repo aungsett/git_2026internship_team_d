@@ -190,6 +190,40 @@ router.post('/applications', authenticateToken, upload.single('cv_file'), async 
   }
 });
 
+//Endpoint for applicant to view his/her status
+router.get('/applications/my-status', authenticateToken, async (req, res) => {
+  try {
+    const query = `
+      SELECT 
+        a.application_id, 
+        c.course_name, 
+        a.status, 
+        a.applied_on,
+        -- Get the most recent timestamp from status_history. 
+        -- If no history exists yet, fall back to the original applied_on date.
+        COALESCE(
+          (SELECT changed_at 
+           FROM status_history sh 
+           WHERE sh.application_id = a.application_id 
+           ORDER BY changed_at DESC 
+           LIMIT 1),
+          a.applied_on
+        ) AS last_updated
+      FROM applications a
+      JOIN applicants ap ON a.applicant_id = ap.applicant_id
+      JOIN courses c ON a.course_id = c.course_id
+      WHERE ap.user_id = $1
+      ORDER BY last_updated DESC
+    `;
+    
+    // req.user.user_id comes from the authenticateToken middleware
+    const result = await pool.query(query,[req.user.user_id]);
+    
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // --- Admin endpoints (require authenticateToken + isAdmin) ---
 
