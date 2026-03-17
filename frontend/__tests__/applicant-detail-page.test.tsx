@@ -1,14 +1,20 @@
 // Component-level test for the admin applicant detail page.
+// This behaves like a small integration test: we render the real page component and mock
+// only Next.js navigation + API helpers so that UI behaviour can be asserted end‑to‑end.
 import React from "react";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import ApplicantDetailPage from "@/app/admin-login/dashboard/applicants/[id]/page";
+import type * as ApisModule from "@/app/lib/apis";
+
+// Allow assertions on where unauthenticated users are redirected.
+const replaceMock = jest.fn();
 
 // Mock Next navigation hooks so the page thinks it's on `/admin-login/dashboard/applicants/123`.
 jest.mock("next/navigation", () => ({
   useParams: () => ({ id: "123" }),
-  useRouter: () => ({ replace: jest.fn() }),
+  useRouter: () => ({ replace: replaceMock }),
 }));
 
 // Mock API client so we don't hit the real backend; we control the applicant data and mutations.
@@ -47,14 +53,22 @@ jest.mock("@/app/lib/apis", () => {
   };
 });
 
+// Convenience accessor for mocked API helpers inside individual tests.
+const mockedApis = jest.requireMock("@/app/lib/apis") as jest.Mocked<
+  typeof ApisModule
+>;
+
 describe("Applicant detail page", () => {
   it("dims non-selected statuses and shows toast on change", async () => {
+    // Arrange: render the page with our mocks wired up.
     const user = userEvent.setup();
     render(<ApplicantDetailPage />);
 
     // Wait for initial applicant data to load and header to render.
     await screen.findByRole("heading", { name: "Jane Doe" });
 
+    // Narrow our queries to the "Update Status" card so we don't accidentally
+    // match similar text elsewhere on the page.
     const updateStatusCard = screen
       .getByRole("heading", { name: "Update Status" })
       .closest("div");
@@ -64,14 +78,39 @@ describe("Applicant detail page", () => {
     const selected = scope.getByText("New");
     const nonSelected = scope.getByText("Under Review");
 
+    // The currently selected status is visually highlighted; others are dimmed.
     expect(selected.className).toContain("shadow");
     expect(nonSelected.className).toContain("opacity-60");
 
+    // Act: click a different status option.
     await user.click(nonSelected);
 
+    // Assert: a success toast appears with the new status text.
     await waitFor(() => {
-      expect(screen.getByText(/Status updated to "Under Review"/)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Status updated to "Under Review"/)
+      ).toBeInTheDocument();
     });
+  });
+
+  it("redirects to admin login when there is no token", () => {
+    // Make the token helper behave as if the user is logged out.
+    mockedApis.getToken.mockReturnValueOnce(null);
+
+    render(<ApplicantDetailPage />);
+
+    expect(replaceMock).toHaveBeenCalledWith("/admin-login");
+  });
+
+  it("shows an error message when the initial load fails", async () => {
+    // Simulate API failure for the initial applicant fetch.
+    mockedApis.getAdminApplicationById.mockRejectedValueOnce(
+      new Error("Failed to load")
+    );
+
+    render(<ApplicantDetailPage />);
+
+    await screen.findByText("Failed to load");
   });
 });
 
