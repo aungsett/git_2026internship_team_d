@@ -28,6 +28,15 @@ export default function ApplicantDetailPage() {
   const [error, setError] = useState("");
   const [statusUpdating, setStatusUpdating] = useState(false);
   const [cvDownloading, setCvDownloading] = useState(false);
+  // Short-lived success message shown near the top of the screen after status updates.
+  const [toast, setToast] = useState<string | null>(null);
+
+  // Auto-hide the toast after a small delay so it does not require manual dismissal.
+  useEffect(() => {
+    if (!toast) return;
+    const t = window.setTimeout(() => setToast(null), 2200);
+    return () => window.clearTimeout(t);
+  }, [toast]);
 
   useEffect(() => {
     if (!id) return;
@@ -49,7 +58,9 @@ export default function ApplicantDetailPage() {
     setStatusUpdating(true);
     try {
       await updateApplicationStatus(id, newStatus);
+      // Optimistically update local state so the new status and styling are reflected immediately.
       setDetail((d) => (d ? { ...d, status: newStatus } : null));
+      setToast(`Status updated to "${newStatus}"`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Update failed");
     } finally {
@@ -141,6 +152,13 @@ export default function ApplicantDetailPage() {
 
   return (
     <div className="min-h-screen text-[#1e293b]">
+      {toast && (
+        <div className="fixed top-[76px] sm:top-[88px] left-0 right-0 z-[60] flex justify-center px-4">
+          <div className="pointer-events-none bg-[#eef2ff] text-[#1e293b] text-sm font-semibold px-4 py-2.5 rounded-xl shadow-[0_10px_30px_rgba(148,163,184,0.35)] border border-[#c7d2fe] max-w-[520px] w-full sm:w-auto text-center">
+            {toast}
+          </div>
+        </div>
+      )}
       {/* Nav */}
       <nav className="fixed top-0 left-0 right-0 z-50 px-4 sm:px-6 lg:px-12 py-3 sm:py-4 flex flex-wrap justify-between items-center gap-2 bg-white/95 backdrop-blur-xl border-b border-[#e2e8f0]">
         <div className="flex items-center gap-2 sm:gap-2.5 text-lg sm:text-xl font-bold text-[#1e293b]">
@@ -173,43 +191,46 @@ export default function ApplicantDetailPage() {
 
         {/* Profile Header */}
         <div className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 flex flex-col gap-5 sm:gap-6 mb-6 shadow-[0_2px_4px_rgba(0,0,0,0.02)] border border-[#f1f5f9]">
-          <div className="flex flex-col min-[480px]:flex-row gap-4 sm:gap-6">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-linear-to-br from-purple-400 to-indigo-500 rounded-[16px] sm:rounded-[20px] flex items-center justify-center text-2xl sm:text-3xl font-bold text-white shrink-0">
-              {initials}
-            </div>
-            <div className="min-w-0">
-              <h1 className="text-[1.5rem] sm:text-[1.75rem] font-extrabold text-[#0f172a] mb-1 break-words">
-                {detail.full_name}
-              </h1>
-              <p className="text-[#64748b] text-sm sm:text-base mb-3 break-all">{detail.email}</p>
-              <div className="flex gap-2 flex-wrap">
-                <span className="py-1.5 px-3 sm:px-3.5 bg-purple-100 text-purple-700 rounded-[16px] sm:rounded-[20px] text-[0.75rem] sm:text-[0.8rem] font-medium">
-                  {detail.course_name}
-                </span>
-                {detail.years_experience && (
-                  <span className="py-1.5 px-3 sm:px-3.5 bg-blue-100 text-blue-700 rounded-[16px] sm:rounded-[20px] text-[0.75rem] sm:text-[0.8rem] font-medium">
-                    {detail.years_experience} Years Exp
+          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5">
+            <div className="flex flex-col min-[480px]:flex-row gap-4 sm:gap-6 min-w-0">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-linear-to-br from-purple-400 to-indigo-500 rounded-[16px] sm:rounded-[20px] flex items-center justify-center text-2xl sm:text-3xl font-bold text-white shrink-0">
+                {initials}
+              </div>
+              <div className="min-w-0">
+                <h1 className="text-[1.5rem] sm:text-[1.75rem] font-extrabold text-[#0f172a] mb-1 break-words">
+                  {detail.full_name}
+                </h1>
+                <p className="text-[#64748b] text-sm sm:text-base mb-3 break-all">{detail.email}</p>
+                <div className="flex gap-2 flex-wrap">
+                  <span className="py-1.5 px-3 sm:px-3.5 bg-purple-100 text-purple-700 rounded-[16px] sm:rounded-[20px] text-[0.75rem] sm:text-[0.8rem] font-medium">
+                    {detail.course_name}
                   </span>
-                )}
-                <span
-                  className={`py-1.5 px-3 sm:px-3.5 rounded-[16px] sm:rounded-[20px] text-[0.75rem] sm:text-[0.8rem] font-medium ${
-                    statusStyle[detail.status] || "bg-gray-100 text-gray-700"
-                  }`}
-                >
-                  {detail.status}
-                </span>
+                  {detail.years_experience && (
+                    <span className="py-1.5 px-3 sm:px-3.5 bg-blue-100 text-blue-700 rounded-[16px] sm:rounded-[20px] text-[0.75rem] sm:text-[0.8rem] font-medium">
+                      {detail.years_experience} Years Exp
+                    </span>
+                  )}
+                  <span
+                    className={`py-1.5 px-3 sm:px-3.5 rounded-[16px] sm:rounded-[20px] text-[0.75rem] sm:text-[0.8rem] font-medium ${
+                      statusStyle[detail.status] || "bg-gray-100 text-gray-700"
+                    }`}
+                  >
+                    {detail.status}
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
-          <div className="flex shrink-0">
-            <button
-              type="button"
-              onClick={handleDownloadCv}
-              disabled={cvDownloading}
-              className="w-full sm:w-auto bg-[#eef2ff] border border-[#c7d2fe] text-[#4f46e5] py-3 px-5 rounded-xl font-semibold cursor-pointer transition-all flex items-center justify-center gap-2 hover:bg-indigo-500 hover:text-white hover:shadow-[0_8px_16px_rgba(99,102,241,0.2)] disabled:opacity-50 min-h-[48px]"
-            >
-              {cvDownloading ? "⏳" : "⬇️"} Download CV
-            </button>
+
+            <div className="flex shrink-0 lg:justify-end">
+              <button
+                type="button"
+                onClick={handleDownloadCv}
+                disabled={cvDownloading}
+                className="w-full sm:w-auto bg-[#eef2ff] border border-[#c7d2fe] text-[#4f46e5] py-3 px-5 rounded-xl font-semibold cursor-pointer transition-all flex items-center justify-center gap-2 hover:bg-indigo-500 hover:text-white hover:shadow-[0_8px_16px_rgba(99,102,241,0.2)] disabled:opacity-50 min-h-[48px]"
+              >
+                {cvDownloading ? "⏳" : "⬇️"} Download CV
+              </button>
+            </div>
           </div>
         </div>
 
@@ -248,7 +269,6 @@ export default function ApplicantDetailPage() {
               <InfoRow
                 label="Course"
                 value={`${detail.course_name} (${detail.course_level})`}
-                highlight
               />
               {detail.course_schedule && (
                 <InfoRow
@@ -328,12 +348,10 @@ export default function ApplicantDetailPage() {
                       className="hidden"
                     />
                     <span
-                      className={`block py-3.5 text-center rounded-xl font-medium border-2 border-transparent transition-all ${
-                        statusOptStyle[s] || "bg-gray-100 text-gray-700"
-                      } ${
+                      className={`block py-3.5 text-center rounded-xl font-semibold border-2 transition-all ${
                         detail.status === s
-                          ? "border-current scale-[1.02]"
-                          : ""
+                          ? `${statusOptStyle[s] || "bg-gray-100 text-gray-700"} border-current shadow-[0_10px_24px_rgba(0,0,0,0.10)]`
+                          : `${statusOptStyle[s] || "bg-gray-100 text-gray-700"} opacity-60 border-transparent hover:opacity-90`
                       }`}
                     >
                       {s}
