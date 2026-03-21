@@ -14,6 +14,12 @@ jest.mock('../db', () => {
   };
 });
 
+// Real SMTP is not used in tests: stub mail so routes can call notify* without nodemailer or .env.
+jest.mock('../services/mail', () => ({
+  notifyApplicationSubmitted: jest.fn().mockResolvedValue(undefined),
+  notifyApplicationStatus: jest.fn().mockResolvedValue(undefined),
+}));
+
 const pool = require('../db');
 
 
@@ -225,6 +231,14 @@ describe('POST /api/v1/auth/register', () => {
         release: jest.fn()
       };
       pool.connect.mockResolvedValue(mockClient);
+      // After COMMIT, the route loads applicant + course for the status email; mock that row for pool.query.
+      pool.query.mockResolvedValue({
+        rows: [{
+          email: 'applicant@test.com',
+          full_name: 'Applicant',
+          course_name: 'Japanese for Beginners',
+        }],
+      });
 
       const res = await request(app)
         .patch('/api/v1/admin/applications/100/status')
@@ -254,6 +268,14 @@ describe('POST /api/v1/auth/register', () => {
         release: jest.fn()
       };
       pool.connect.mockResolvedValue(mockClient);
+      // After COMMIT, the route loads applicant + course for the confirmation email; mock that row for pool.query.
+      pool.query.mockResolvedValue({
+        rows: [{
+          email: 'applicant@test.com',
+          full_name: 'Applicant',
+          course_name: 'Japanese for Beginners',
+        }],
+      });
 
       // Create a fake valid JWT token so `authenticateToken` passes
       const token = jwt.sign({ user_id: 1, role: 'applicant' }, process.env.JWT_SECRET);

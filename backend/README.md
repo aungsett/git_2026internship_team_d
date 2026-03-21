@@ -25,6 +25,8 @@
    - `DB_PORT` – usually `5432`
    - `JWT_SECRET` – long random string for signing tokens
 
+   **Optional — applicant email (SMTP):** To send confirmation emails on application submit and status updates when an admin changes an application, set `SMTP_HOST`, `SMTP_USER`, and `SMTP_PASS` (see comments in `.env.example`). Use `MAIL_FROM` for the visible sender if your provider allows it. If SMTP is not set, the API still runs; emails are skipped.
+
 4. **Start**:
    ```bash
    npm install
@@ -41,3 +43,10 @@
    node scripts/create-admin.js your@email.com YourPassword
    ```
    Then open the app → **Admin Login** (or `/admin-login`) and sign in with those credentials.
+
+## Tests and HTML report
+
+- Run **`npm test`** from this folder. Jest executes `__tests__/`.
+- **jest-html-reporter** writes **`test-report/index.html`**. Open it in a browser after a test run for a formatted report. See **`test-report/README.md`**.
+
+Mail sending is **mocked** in tests (`jest.mock('../services/mail')`) so no real SMTP or `.env` mail vars are required for CI.

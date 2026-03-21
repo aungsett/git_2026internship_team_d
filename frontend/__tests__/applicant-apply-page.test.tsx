@@ -2,7 +2,7 @@
 // These cover access control (requires login), initial data loading, and a basic happy-path submission.
 
 import React from "react";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, fireEvent, waitFor } from "@testing-library/react";
 
 import ApplicantApplyPage from "@/app/applicant/apply/page";
 import type * as ApisModule from "@/app/lib/apis";
@@ -44,7 +44,7 @@ describe("ApplicantApplyPage", () => {
     mockedApis.getToken.mockReturnValueOnce("token");
     mockedApis.getCourses.mockResolvedValueOnce([
       { course_id: 1, course_name: "Course A", course_level: "Beginner" },
-    ] as any);
+    ] as unknown);
 
     render(<ApplicantApplyPage />);
 

@@ -4,6 +4,10 @@
  * - Public: GET /courses
  * - Applicant (authenticated): POST /applications (with CV upload)
  * - Admin (authenticated + isAdmin): applications list/detail, status update, stats, CSV export, CV download
+ *
+ * Email (optional): after a successful application submit, the applicant gets a confirmation email.
+ * After an admin changes status, the applicant gets a status email. Implemented in ../services/mail.js
+ * and triggered from POST /applications and PATCH /admin/applications/:id/status below.
  */
 
 const express = require('express');
@@ -14,6 +18,11 @@ const multer = require('multer');
 const path = require('path');
 const pool = require('../db');
 const { authenticateToken, isAdmin } = require('../middleware/auth');
+// Sends applicant emails (SMTP optional). Does not block API responses if sending fails.
+const mail = require('../services/mail');
+
+// Allowed values for PATCH /admin/applications/:id/status (must match DB CHECK constraint).
+const APPLICATION_STATUSES = ['New', 'Under Review', 'Shortlisted', 'Rejected'];
 
 // --- File upload (CV/Resume) ---
 // Files saved to backend/uploads/ with timestamp prefix; max 5MB per file
@@ -181,6 +190,28 @@ router.post('/applications', authenticateToken, upload.single('cv_file'), async 
 
     await client.query('COMMIT');
     const ref = `APP-${new Date().getFullYear()}-${String(application_id).padStart(5, '0')}`;
+
+    // Post-commit: load applicant email + course name for the confirmation email (uses pool, not the transaction client).
+    const emailRes = await pool.query(
+      `SELECT u.email, u.full_name, c.course_name
+       FROM applications a
+       JOIN applicants ap ON a.applicant_id = ap.applicant_id
+       JOIN users u ON ap.user_id = u.user_id
+       JOIN courses c ON a.course_id = c.course_id
+       WHERE a.application_id = $1`,
+      [application_id]
+    );
+    const submittedRow = emailRes.rows[0];
+    if (submittedRow?.email) {
+      // Fire-and-forget: do not await so a slow SMTP server cannot delay the HTTP response.
+      void mail.notifyApplicationSubmitted({
+        to: submittedRow.email,
+        applicantName: submittedRow.full_name,
+        courseName: submittedRow.course_name,
+        applicationRef: ref,
+      });
+    }
+
     res.status(201).json({ message: 'Application submitted successfully', application_id, application_ref: ref });
   } catch (err) {
     await client.query('ROLLBACK');
@@ -333,30 +364,69 @@ router.get('/admin/applications/:id/cv', authenticateToken, isAdmin, async (req,
   }
 });
 
-/** PATCH /admin/applications/:id/status — Update application status and log change in status_history */
+/**
+ * PATCH /admin/applications/:id/status — Update application status and log change in status_history.
+ * Validates status, returns 404 if the application row is missing, skips DB work if status unchanged.
+ * After a successful update, notifies the applicant by email (same ref format as submit: APP-YYYY-NNNNN).
+ */
 router.patch('/admin/applications/:id/status', authenticateToken, isAdmin, async (req, res) => {
+  const newStatus = req.body.status;
+  const applicationId = req.params.id;
+
+  if (!newStatus || !APPLICATION_STATUSES.includes(newStatus)) {
+    return res.status(400).json({ error: 'Invalid status' });
+  }
+
   const client = await pool.connect();
   try {
-    const { status } = req.body;
-    const applicationId = req.params.id;
-
     await client.query('BEGIN');
 
-    // get old status
     const oldRes = await client.query('SELECT status FROM applications WHERE application_id = $1', [applicationId]);
-    const oldStatus = oldRes.rows[0]?.status;
+    if (!oldRes.rows[0]) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Application not found' });
+    }
 
-    // update Status
-    await client.query('UPDATE applications SET status = $1 WHERE application_id = $2', [status, applicationId]);
+    const oldStatus = oldRes.rows[0].status;
 
-    // log History
+    if (oldStatus === newStatus) {
+      await client.query('ROLLBACK');
+      return res.json({ message: 'Status unchanged', new_status: newStatus });
+    }
+
+    await client.query('UPDATE applications SET status = $1 WHERE application_id = $2', [newStatus, applicationId]);
+
     await client.query(
       'INSERT INTO status_history (application_id, old_status, new_status, changed_by) VALUES ($1, $2, $3, $4)',
-      [applicationId, oldStatus, status, req.user.user_id]
+      [applicationId, oldStatus, newStatus, req.user.user_id]
     );
 
     await client.query('COMMIT');
-    res.json({ message: 'Status updated', new_status: status });
+
+    // Post-commit: fetch applicant email for the status notification (not part of the transaction above).
+    const infoRes = await pool.query(
+      `SELECT u.email, u.full_name, c.course_name
+       FROM applications a
+       JOIN applicants ap ON a.applicant_id = ap.applicant_id
+       JOIN users u ON ap.user_id = u.user_id
+       JOIN courses c ON a.course_id = c.course_id
+       WHERE a.application_id = $1`,
+      [applicationId]
+    );
+    const detailRow = infoRes.rows[0];
+    const ref = `APP-${new Date().getFullYear()}-${String(applicationId).padStart(5, '0')}`;
+    if (detailRow?.email) {
+      void mail.notifyApplicationStatus({
+        to: detailRow.email,
+        applicantName: detailRow.full_name,
+        courseName: detailRow.course_name,
+        applicationRef: ref,
+        oldStatus,
+        newStatus,
+      });
+    }
+
+    res.json({ message: 'Status updated', new_status: newStatus });
   } catch (err) {
     await client.query('ROLLBACK');
     res.status(500).json({ error: err.message });

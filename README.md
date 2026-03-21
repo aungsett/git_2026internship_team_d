@@ -71,6 +71,14 @@ Edit `backend/.env`:
 | `DB_PASSWORD` | PostgreSQL password                | your password              |
 | `DB_PORT`   | PostgreSQL port                      | `5432`                     |
 | `JWT_SECRET`| Secret for signing JWTs (min 32 chars) | long random string       |
+| `SMTP_HOST` | Outgoing mail server (optional; enables applicant emails) | e.g. `smtp.gmail.com` |
+| `SMTP_USER` | SMTP login username | your mailbox or API user |
+| `SMTP_PASS` | SMTP password or app password | (keep secret) |
+| `MAIL_FROM` | Visible “From” address (optional; defaults to `SMTP_USER`) | e.g. `noreply@yourdomain.com` |
+| `SMTP_PORT` | SMTP port (optional) | `587` (TLS) or `465` (SSL) |
+| `SMTP_SECURE` | Use SSL (optional; often `true` with port 465) | `false` or `true` |
+
+**Email notifications (optional):** If `SMTP_HOST`, `SMTP_USER`, and `SMTP_PASS` are set, applicants receive a **confirmation email** when they submit an application and an **update email** when an admin changes their status (e.g. Shortlisted, Rejected). If SMTP is omitted, the API still works; emails are simply skipped. Implementation: `backend/services/mail.js`, triggered from `POST /api/v1/applications` and `PATCH /api/v1/admin/applications/:id/status`. With **Gmail**, the address recipients see often matches the account you authenticate with unless you use “Send mail as” or the same address for `SMTP_USER` and `MAIL_FROM`.
 
 ### 4. Create uploads folder (for CVs)
 
@@ -108,6 +116,10 @@ npm run dev
 API base: **http://localhost:5000**. Routes are under **/api/v1** (e.g. `/api/v1/auth/login`, `/api/v1/courses`, `/api/v1/applications`).
 
 More backend details: see **`backend/README.md`**.
+
+### Backend tests and HTML report
+
+From `backend/`, run `npm test`. Jest runs `backend/__tests__/` and also writes an HTML summary to **`backend/test-report/index.html`** (see `backend/test-report/README.md`). Open that file in a browser for a pass/fail report.
 
 ---
 
@@ -197,7 +209,7 @@ Login responses return `{ token, role }`. Use `Authorization: Bearer <token>` fo
 
 ## Tech stack
 
-- **Backend:** Node.js, Express, PostgreSQL (pg), JWT (jsonwebtoken), bcryptjs, multer (file upload), dotenv, cors.
+- **Backend:** Node.js, Express, PostgreSQL (pg), JWT (jsonwebtoken), bcryptjs, multer (file upload), dotenv, cors, nodemailer (optional SMTP for applicant emails).
 - **Frontend:** Next.js 16, React 19, TypeScript, Tailwind CSS, NextAuth (optional Google).
 
 ---
