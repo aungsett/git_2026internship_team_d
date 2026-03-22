@@ -15,23 +15,32 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
-const path = require('path');
 const pool = require('../db');
 const { authenticateToken, isAdmin } = require('../middleware/auth');
 // Sends applicant emails (SMTP optional). Does not block API responses if sending fails.
 const mail = require('../services/mail');
+const { uploadResumeToS3, getResumeFromS3, deleteResumeFromS3 } = require('../services/s3');
 
 // Allowed values for PATCH /admin/applications/:id/status (must match DB CHECK constraint).
 const APPLICATION_STATUSES = ['New', 'Under Review', 'Shortlisted', 'Rejected'];
 
 // --- File upload (CV/Resume) ---
-// Files saved to backend/uploads/ with timestamp prefix; max 5MB per file
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, 'uploads/'),
-  filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
-});
+// Files are buffered in memory and uploaded directly to S3 (never persisted to local disk).
+const storage = multer.memoryStorage();
 const upload = multer({
   storage: storage,
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/octet-stream',
+    ];
+    if (!allowedTypes.includes(file.mimetype)) {
+      return cb(new Error('Only PDF, DOC, and DOCX files are allowed'));
+    }
+    cb(null, true);
+  },
   limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
 });
 
@@ -135,6 +144,7 @@ router.get('/courses', async (req, res) => {
 /** POST /applications — Submit application (authenticated). Creates/updates applicant, creates application and optional document. Expects multipart with cv_file. */
 router.post('/applications', authenticateToken, upload.single('cv_file'), async (req, res) => {
   const client = await pool.connect();
+  let uploadedS3Key = null;
   try {
     await client.query('BEGIN');
 
@@ -182,9 +192,15 @@ router.post('/applications', authenticateToken, upload.single('cv_file'), async 
     const application_id = appRes.rows[0].application_id;
 
     if (req.file) {
+      const uploaded = await uploadResumeToS3({
+        userId: req.user.user_id,
+        file: req.file,
+      });
+      uploadedS3Key = uploaded.key;
+
       await client.query(
         'INSERT INTO documents (application_id, file_name, file_path, file_size) VALUES ($1, $2, $3, $4)',
-        [application_id, req.file.originalname, req.file.path, req.file.size]
+        [application_id, req.file.originalname, uploaded.key, String(req.file.size)]
       );
     }
 
@@ -215,6 +231,14 @@ router.post('/applications', authenticateToken, upload.single('cv_file'), async 
     res.status(201).json({ message: 'Application submitted successfully', application_id, application_ref: ref });
   } catch (err) {
     await client.query('ROLLBACK');
+    if (uploadedS3Key) {
+      try {
+        await deleteResumeFromS3(uploadedS3Key);
+      } catch (cleanupErr) {
+        // Best effort cleanup: log and preserve original failure response.
+        console.error('Failed to clean up S3 object after transaction rollback:', cleanupErr.message);
+      }
+    }
     res.status(500).json({ error: err.message });
   } finally {
     client.release();
@@ -357,8 +381,23 @@ router.get('/admin/applications/:id/cv', authenticateToken, isAdmin, async (req,
     }
 
     const fileData = result.rows[0];
-    const absolutePath = path.resolve(fileData.file_path);
-    res.download(absolutePath, fileData.file_name);
+    const s3Object = await getResumeFromS3(fileData.file_path);
+    res.setHeader('Content-Type', s3Object.contentType || 'application/octet-stream');
+    if (s3Object.contentLength) {
+      res.setHeader('Content-Length', String(s3Object.contentLength));
+    }
+    res.setHeader('Content-Disposition', `attachment; filename="${fileData.file_name}"`);
+
+    s3Object.stream.on('error', (streamErr) => {
+      console.error('S3 stream error:', streamErr.message);
+      if (!res.headersSent) {
+        res.status(500).json({ error: 'Failed to stream CV' });
+      } else {
+        res.end();
+      }
+    });
+
+    s3Object.stream.pipe(res);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

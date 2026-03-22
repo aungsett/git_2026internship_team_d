@@ -20,6 +20,17 @@ jest.mock('../services/mail', () => ({
   notifyApplicationStatus: jest.fn().mockResolvedValue(undefined),
 }));
 
+// Resume files are stored in S3 in production; tests stub these calls.
+jest.mock('../services/s3', () => ({
+  uploadResumeToS3: jest.fn().mockResolvedValue({
+    key: 'resumes/test/user-1/test-resume.pdf',
+    bucket: 'git-2026internship-team-d',
+    etag: 'etag-test',
+  }),
+  getResumeFromS3: jest.fn(),
+  deleteResumeFromS3: jest.fn().mockResolvedValue(undefined),
+}));
+
 const pool = require('../db');
 
 

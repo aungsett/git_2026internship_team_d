@@ -24,8 +24,15 @@
    - `DB_NAME` – `ats_db`
    - `DB_PORT` – usually `5432`
    - `JWT_SECRET` – long random string for signing tokens
+   - `AWS_REGION` – AWS region for your S3 bucket (e.g. `ap-south-1`)
+   - `AWS_ACCESS_KEY_ID` – IAM access key with S3 object permissions
+   - `AWS_SECRET_ACCESS_KEY` – matching IAM secret
+   - `S3_BUCKET_NAME` – bucket name for resumes (for this project: `git-2026internship-team-d`)
+   - `S3_KEY_PREFIX` – optional object key prefix (default: `resumes`)
 
    **Optional — applicant email (SMTP):** To send confirmation emails on application submit and status updates when an admin changes an application, set `SMTP_HOST`, `SMTP_USER`, and `SMTP_PASS` (see comments in `.env.example`). Use `MAIL_FROM` for the visible sender if your provider allows it. If SMTP is not set, the API still runs; emails are skipped.
+
+   **Resume storage behavior:** applicant resume files are uploaded directly to S3. The database stores only object references (S3 keys and metadata), not file binaries.
 
 4. **Start**:
    ```bash
