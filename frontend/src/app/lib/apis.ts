@@ -4,9 +4,8 @@
  * - Other calls use API_URL (backend base). NEXT_PUBLIC_API_URL can override for production.
  */
 
-const API_URL = typeof window !== "undefined"
-  ? "http://localhost:5000/api/v1"
-  : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1");
+const API_URL = process.env.NEXT_PUBLIC_API_URL
+  || (typeof window !== "undefined" ? "/api/v1" : "http://localhost:5000/api/v1");
 
 type LoginResponse = {
   token: string;
