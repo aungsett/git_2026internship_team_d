@@ -28,6 +28,7 @@ export default function ApplicantDetailPage() {
   const [error, setError] = useState("");
   const [statusUpdating, setStatusUpdating] = useState(false);
   const [cvDownloading, setCvDownloading] = useState(false);
+  const [cvPreviewing, setCvPreviewing] = useState(false);
   // Short-lived success message shown near the top of the screen after status updates.
   const [toast, setToast] = useState<string | null>(null);
 
@@ -84,6 +85,27 @@ export default function ApplicantDetailPage() {
       setError("Failed to download CV");
     } finally {
       setCvDownloading(false);
+    }
+  };
+
+  /** Fetches CV blob and opens a preview in a new tab. */
+  const handlePreviewCv = async () => {
+    if (!id) return;
+    setCvPreviewing(true);
+    try {
+      const blob = await downloadAdminCv(id);
+      const url = URL.createObjectURL(blob);
+      const opened = window.open(url, "_blank", "noopener,noreferrer");
+      if (!opened) {
+        URL.revokeObjectURL(url);
+        setError("Preview blocked by browser popup settings");
+        return;
+      }
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch {
+      setError("Failed to preview CV");
+    } finally {
+      setCvPreviewing(false);
     }
   };
 
@@ -321,6 +343,14 @@ export default function ApplicantDetailPage() {
                   </div>
                 </div>
                 <div className="flex gap-2.5">
+                  <button
+                    type="button"
+                    onClick={handlePreviewCv}
+                    disabled={cvPreviewing}
+                    className="flex-1 py-3 bg-white border border-[#c7d2fe] rounded-[10px] text-[#4f46e5] font-semibold cursor-pointer transition-all hover:bg-[#eef2ff] disabled:opacity-50"
+                  >
+                    {cvPreviewing ? "⏳ Previewing..." : "👁️ Preview"}
+                  </button>
                   <button
                     type="button"
                     onClick={handleDownloadCv}

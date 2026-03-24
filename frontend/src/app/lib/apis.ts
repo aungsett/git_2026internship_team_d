@@ -126,6 +126,14 @@ export type SubmitApplicationResponse = {
   application_ref: string;
 };
 
+export type MyApplicationStatus = {
+  application_id: number;
+  course_name: string;
+  status: string;
+  applied_on: string;
+  last_updated?: string;
+};
+
 /** Submit application (multipart). Call from client with getToken(). */
 export async function submitApplication(form: ApplicationFormData) {
   const token = getToken();
@@ -159,6 +167,18 @@ export async function submitApplication(form: ApplicationFormData) {
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Failed to submit application");
   return data as SubmitApplicationResponse;
+}
+
+/** Applicant dashboard list: submitted applications with latest status. */
+export async function getMyApplicationStatuses(): Promise<MyApplicationStatus[]> {
+  const token = getToken();
+  if (!token) throw new Error("You must be logged in to view your application status.");
+  const res = await fetch(`${API_URL}/applications/my-status`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Failed to load application statuses");
+  return data as MyApplicationStatus[];
 }
 
 // ——— Admin API (use with admin token) ———

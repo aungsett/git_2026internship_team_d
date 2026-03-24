@@ -127,8 +127,27 @@ async function notifyApplicationStatus(p) {
   await sendMail({ to: p.to, subject, text });
 }
 
+/**
+ * Email sent right after a new account is created from POST /auth/register.
+ * @param {{ to: string, applicantName: string }} p
+ */
+async function notifyAccountCreated(p) {
+  const name = p.applicantName || 'Applicant';
+  const subject = 'Welcome to RecruitPro ATS';
+  const text = [
+    `Hello ${name},`,
+    '',
+    'Your account has been created successfully.',
+    'You can now sign in and submit your application from the applicant portal.',
+    '',
+    '— RecruitPro ATS',
+  ].join('\n');
+  await sendMail({ to: p.to, subject, text });
+}
+
 module.exports = {
   sendMail,
   notifyApplicationSubmitted,
   notifyApplicationStatus,
+  notifyAccountCreated,
 };

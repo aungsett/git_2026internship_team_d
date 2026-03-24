@@ -112,5 +112,33 @@ describe("Applicant detail page", () => {
 
     await screen.findByText("Failed to load");
   });
+
+  it("opens CV preview in a new tab", async () => {
+    const user = userEvent.setup();
+    const openSpy = jest
+      .spyOn(window, "open")
+      .mockReturnValue({} as Window);
+    const originalCreate = URL.createObjectURL;
+    const originalRevoke = URL.revokeObjectURL;
+    URL.createObjectURL = jest.fn(() => "blob:preview-url");
+    URL.revokeObjectURL = jest.fn();
+
+    render(<ApplicantDetailPage />);
+    await screen.findByRole("heading", { name: "Jane Doe" });
+
+    const previewBtn = screen.getByRole("button", { name: /preview/i });
+    await user.click(previewBtn);
+
+    expect(mockedApis.downloadAdminCv).toHaveBeenCalledWith("123");
+    expect(openSpy).toHaveBeenCalledWith(
+      "blob:preview-url",
+      "_blank",
+      "noopener,noreferrer"
+    );
+
+    openSpy.mockRestore();
+    URL.createObjectURL = originalCreate;
+    URL.revokeObjectURL = originalRevoke;
+  });
 });
 

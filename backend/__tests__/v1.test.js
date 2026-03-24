@@ -18,6 +18,7 @@ jest.mock('../db', () => {
 jest.mock('../services/mail', () => ({
   notifyApplicationSubmitted: jest.fn().mockResolvedValue(undefined),
   notifyApplicationStatus: jest.fn().mockResolvedValue(undefined),
+  notifyAccountCreated: jest.fn().mockResolvedValue(undefined),
 }));
 
 // Resume files are stored in S3 in production; tests stub these calls.

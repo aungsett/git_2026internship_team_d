@@ -100,7 +100,16 @@ router.post('/auth/register', async (req, res) => {
       [full_name, email, hashedPassword, 'applicant']
     );
 
-    res.status(201).json(result.rows[0]);
+    const createdUser = result.rows[0];
+    if (createdUser?.email) {
+      // Fire-and-forget welcome email so registration response is not delayed by SMTP.
+      void mail.notifyAccountCreated({
+        to: createdUser.email,
+        applicantName: createdUser.full_name,
+      });
+    }
+
+    res.status(201).json(createdUser);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

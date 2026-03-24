@@ -6,17 +6,26 @@
  */
 
 import { useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { getToken } from "../lib/apis";
+import { getMyApplicationStatuses, getToken, type MyApplicationStatus } from "../lib/apis";
 
 export default function ApplicantDashboard() {
   const router = useRouter();
+  const [items, setItems] = useState<MyApplicationStatus[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (!getToken()) {
       router.replace("/login");
+      return;
     }
+    getMyApplicationStatuses()
+      .then(setItems)
+      .catch((e) => setError(e instanceof Error ? e.message : "Failed to load application status"))
+      .finally(() => setLoading(false));
   }, [router]);
 
   /** Clears token/role from localStorage and redirects to applicant login. */
@@ -96,6 +105,61 @@ export default function ApplicantDashboard() {
               ← Back to home
             </Link>
           </div>
+        </div>
+
+        <div className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 lg:p-10 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05),0_10px_15px_-3px_rgba(0,0,0,0.05)] border border-[#f1f5f9] mt-6">
+          <h2 className="text-lg sm:text-xl font-bold text-[#0f172a] mb-4">
+            Your Applications
+          </h2>
+
+          {loading ? (
+            <p className="text-[#64748b] text-sm sm:text-base">Loading your applications...</p>
+          ) : error ? (
+            <p className="text-red-600 text-sm sm:text-base">{error}</p>
+          ) : items.length === 0 ? (
+            <p className="text-[#64748b] text-sm sm:text-base">
+              You have not submitted an application yet.
+            </p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-sm sm:text-base">
+                <thead>
+                  <tr className="text-left border-b border-[#e2e8f0]">
+                    <th className="py-2 pr-4 font-semibold text-[#334155]">Reference</th>
+                    <th className="py-2 pr-4 font-semibold text-[#334155]">Course</th>
+                    <th className="py-2 pr-4 font-semibold text-[#334155]">Status</th>
+                    <th className="py-2 font-semibold text-[#334155]">Last Updated</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((it) => {
+                    const ref = `APP-${new Date(it.applied_on).getFullYear()}-${String(it.application_id).padStart(5, "0")}`;
+                    const updatedAt = it.last_updated || it.applied_on;
+                    return (
+                      <tr key={it.application_id} className="border-b border-[#f1f5f9]">
+                        <td className="py-3 pr-4 text-[#334155]">{ref}</td>
+                        <td className="py-3 pr-4 text-[#334155]">{it.course_name || "—"}</td>
+                        <td className="py-3 pr-4">
+                          <span className="inline-block py-1 px-2 rounded-lg bg-indigo-50 text-indigo-700 font-medium">
+                            {it.status}
+                          </span>
+                        </td>
+                        <td className="py-3 text-[#64748b]">
+                          {updatedAt
+                            ? new Date(updatedAt).toLocaleDateString("en-US", {
+                                year: "numeric",
+                                month: "short",
+                                day: "numeric",
+                              })
+                            : "—"}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </main>
     </div>
