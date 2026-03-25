@@ -173,30 +173,30 @@ router.post('/applications', authenticateToken, upload.single('cv_file'), async 
       applicantFullName = userRow.rows[0]?.full_name || 'Applicant';
     }
 
-    const applicantRes = await client.query(
-      `INSERT INTO applicants (user_id, full_name, phone_number, location, date_of_birth, highest_degree, field_of_study, university, graduation_year, gpa_percentage, years_experience, current_job_title, company_name, industry, professional_summary)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
-       ON CONFLICT (user_id) DO UPDATE SET 
-       full_name = EXCLUDED.full_name, phone_number = EXCLUDED.phone_number, location = EXCLUDED.location,
-       date_of_birth = EXCLUDED.date_of_birth, highest_degree = EXCLUDED.highest_degree, field_of_study = EXCLUDED.field_of_study,
-       university = EXCLUDED.university, graduation_year = EXCLUDED.graduation_year, gpa_percentage = EXCLUDED.gpa_percentage,
-       years_experience = EXCLUDED.years_experience, current_job_title = EXCLUDED.current_job_title,
-       company_name = EXCLUDED.company_name, industry = EXCLUDED.industry, professional_summary = EXCLUDED.professional_summary
-       RETURNING applicant_id`,
-      [req.user.user_id, applicantFullName, phone_number, location, date_of_birth, highest_degree, field_of_study, university, graduation_year, gpa_percentage, years_experience, current_job_title, company_name, industry, professional_summary]
-    );
-    
-    const applicant_id = applicantRes.rows[0].applicant_id;
-
     let finalCourseId = course_id && String(course_id).trim() ? parseInt(course_id, 10) : null;
     if (finalCourseId == null || isNaN(finalCourseId)) {
       const firstCourse = await client.query('SELECT course_id FROM courses LIMIT 1');
       finalCourseId = firstCourse.rows[0]?.course_id || 1;
     }
 
+    // All form fields are stored directly on the application row so each submission
+    // is an independent snapshot — no shared applicant profile that gets overwritten.
     const appRes = await client.query(
-      'INSERT INTO applications (applicant_id, course_id, course_schedule, status) VALUES ($1, $2, $3, $4) RETURNING application_id',
-      [applicant_id, finalCourseId, course_schedule || null, 'New']
+      `INSERT INTO applications
+         (user_id, course_id, course_schedule, status,
+          full_name, phone_number, location, date_of_birth,
+          highest_degree, field_of_study, university, graduation_year,
+          gpa_percentage, years_experience, current_job_title,
+          company_name, industry, professional_summary)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
+       RETURNING application_id`,
+      [
+        req.user.user_id, finalCourseId, course_schedule || null, 'New',
+        applicantFullName, phone_number, location, date_of_birth,
+        highest_degree, field_of_study, university, graduation_year,
+        gpa_percentage, years_experience, current_job_title,
+        company_name, industry, professional_summary
+      ]
     );
     const application_id = appRes.rows[0].application_id;
 
@@ -218,10 +218,9 @@ router.post('/applications', authenticateToken, upload.single('cv_file'), async 
 
     // Post-commit: load applicant email + course name for the confirmation email (uses pool, not the transaction client).
     const emailRes = await pool.query(
-      `SELECT u.email, u.full_name, c.course_name
+      `SELECT u.email, a.full_name, c.course_name
        FROM applications a
-       JOIN applicants ap ON a.applicant_id = ap.applicant_id
-       JOIN users u ON ap.user_id = u.user_id
+       JOIN users u ON a.user_id = u.user_id
        JOIN courses c ON a.course_id = c.course_id
        WHERE a.application_id = $1`,
       [application_id]
@@ -274,9 +273,8 @@ router.get('/applications/my-status', authenticateToken, async (req, res) => {
           a.applied_on
         ) AS last_updated
       FROM applications a
-      JOIN applicants ap ON a.applicant_id = ap.applicant_id
       JOIN courses c ON a.course_id = c.course_id
-      WHERE ap.user_id = $1
+      WHERE a.user_id = $1
       ORDER BY last_updated DESC
     `;
     
@@ -298,14 +296,13 @@ router.get('/admin/applications', authenticateToken, isAdmin, async (req, res) =
 
     //no filtering base
     let queryText = `
-      SELECT a.application_id, a.status, a.applied_on, 
-             u.full_name, u.email,
-             ap.phone_number, ap.highest_degree, ap.years_experience,
+      SELECT a.application_id, a.status, a.applied_on,
+             a.full_name, u.email,
+             a.phone_number, a.highest_degree, a.years_experience,
              c.course_name, c.course_level,
              d.file_path as cv_link
       FROM applications a
-      JOIN applicants ap ON a.applicant_id = ap.applicant_id
-      JOIN users u ON ap.user_id = u.user_id
+      JOIN users u ON a.user_id = u.user_id
       JOIN courses c ON a.course_id = c.course_id
       LEFT JOIN documents d ON a.application_id = d.application_id
       WHERE 1=1
@@ -330,7 +327,7 @@ router.get('/admin/applications', authenticateToken, isAdmin, async (req, res) =
 
     // search by name
     if (search) {
-      queryText += ` AND (u.full_name ILIKE $${paramCount} OR u.email ILIKE $${paramCount})`;
+      queryText += ` AND (a.full_name ILIKE $${paramCount} OR u.email ILIKE $${paramCount})`;
       queryParams.push(`%${search}%`); // Add wildcards for partial match
       paramCount++;
     }
@@ -352,13 +349,15 @@ router.get('/admin/applications/:id', authenticateToken, isAdmin, async (req, re
     const { id } = req.params;
     const query = `
       SELECT a.application_id, a.status, a.applied_on, a.course_schedule,
-             u.full_name, u.email,
-             ap.*,
+             a.full_name, u.email,
+             a.phone_number, a.location, a.date_of_birth,
+             a.highest_degree, a.field_of_study, a.university, a.graduation_year,
+             a.gpa_percentage, a.years_experience, a.current_job_title,
+             a.company_name, a.industry, a.professional_summary,
              c.course_name, c.course_level,
              d.file_path as cv_link, d.file_name
       FROM applications a
-      JOIN applicants ap ON a.applicant_id = ap.applicant_id
-      JOIN users u ON ap.user_id = u.user_id
+      JOIN users u ON a.user_id = u.user_id
       JOIN courses c ON a.course_id = c.course_id
       LEFT JOIN documents d ON a.application_id = d.application_id
       WHERE a.application_id = $1
@@ -453,10 +452,9 @@ router.patch('/admin/applications/:id/status', authenticateToken, isAdmin, async
 
     // Post-commit: fetch applicant email for the status notification (not part of the transaction above).
     const infoRes = await pool.query(
-      `SELECT u.email, u.full_name, c.course_name
+      `SELECT u.email, a.full_name, c.course_name
        FROM applications a
-       JOIN applicants ap ON a.applicant_id = ap.applicant_id
-       JOIN users u ON ap.user_id = u.user_id
+       JOIN users u ON a.user_id = u.user_id
        JOIN courses c ON a.course_id = c.course_id
        WHERE a.application_id = $1`,
       [applicationId]
@@ -502,26 +500,49 @@ router.get('/admin/stats', authenticateToken, isAdmin, async (req, res) => {
   }
 });
 
-/** GET /admin/export/csv — Export all applications as CSV (attachment) */
+/** GET /admin/export/csv — Export applications as CSV (attachment). Supports same filters as GET /admin/applications: search, status, course_id. */
 router.get('/admin/export/csv', authenticateToken, isAdmin, async (req, res) => {
   try {
-    const query = `
-      SELECT 
-        u.full_name, u.email, 
-        ap.phone_number, ap.location, ap.highest_degree, ap.years_experience,
-        c.course_name, 
+    const { search, status, course_id } = req.query;
+
+    let queryText = `
+      SELECT
+        a.full_name, u.email,
+        a.phone_number, a.location, a.highest_degree, a.years_experience,
+        c.course_name,
         a.status, a.applied_on
       FROM applications a
-      JOIN applicants ap ON a.applicant_id = ap.applicant_id
-      JOIN users u ON ap.user_id = u.user_id
+      JOIN users u ON a.user_id = u.user_id
       JOIN courses c ON a.course_id = c.course_id
-      ORDER BY a.applied_on DESC
+      WHERE 1=1
     `;
-    
-    const result = await pool.query(query);
+
+    const queryParams = [];
+    let paramCount = 1;
+
+    if (status && status !== 'All Status') {
+      queryText += ` AND a.status = $${paramCount}`;
+      queryParams.push(status);
+      paramCount++;
+    }
+
+    if (course_id && course_id !== 'All Courses') {
+      queryText += ` AND a.course_id = $${paramCount}`;
+      queryParams.push(course_id);
+      paramCount++;
+    }
+
+    if (search) {
+      queryText += ` AND (a.full_name ILIKE $${paramCount} OR u.email ILIKE $${paramCount})`;
+      queryParams.push(`%${search}%`);
+      paramCount++;
+    }
+
+    queryText += ` ORDER BY a.applied_on DESC`;
+
+    const result = await pool.query(queryText, queryParams);
     const rows = result.rows;
 
-    //headers
     const headers = ['Full Name', 'Email', 'Phone', 'Location', 'Degree', 'Experience', 'Course', 'Status', 'Applied On'];
 
     let csvContent = headers.join(',') + '\n';
@@ -531,7 +552,8 @@ router.get('/admin/export/csv', authenticateToken, isAdmin, async (req, res) => 
       const dataRow = [
         `"${row.full_name}"`,
         `"${row.email}"`,
-        `"${row.phone_number || ''}"`,
+        // Tab prefix forces Excel to treat phone as text, preventing scientific notation
+        `"\t${row.phone_number || ''}"`,
         `"${row.location || ''}"`,
         `"${row.highest_degree || ''}"`,
         `"${row.years_experience || 0}"`,

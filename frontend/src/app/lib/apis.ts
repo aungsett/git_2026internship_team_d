@@ -206,7 +206,6 @@ export type AdminApplication = {
 };
 
 export type AdminApplicationDetail = AdminApplication & {
-  applicant_id: number;
   location: string | null;
   date_of_birth: string | null;
   field_of_study: string | null;
@@ -287,8 +286,17 @@ export async function updateApplicationStatus(
   if (!res.ok) throw new Error(data.error || "Failed to update status");
 }
 
-export async function getAdminExportCsv(): Promise<Blob> {
-  const res = await fetch(`${API_URL}/admin/export/csv`, { headers: adminHeaders() });
+export async function getAdminExportCsv(params?: {
+  search?: string;
+  status?: string;
+  course_id?: string;
+}): Promise<Blob> {
+  const q = new URLSearchParams();
+  if (params?.search) q.set("search", params.search);
+  if (params?.status && params.status !== "All Status") q.set("status", params.status);
+  if (params?.course_id && params.course_id !== "All Courses") q.set("course_id", params.course_id);
+  const url = `${API_URL}/admin/export/csv${q.toString() ? `?${q}` : ""}`;
+  const res = await fetch(url, { headers: adminHeaders() });
   if (!res.ok) throw new Error("Export failed");
   return res.blob();
 }

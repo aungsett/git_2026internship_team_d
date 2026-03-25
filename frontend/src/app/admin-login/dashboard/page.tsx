@@ -88,9 +88,13 @@ export default function AdminDashboard() {
     };
   }, [search, statusFilter, courseFilter]);
 
-  /** Triggers CSV download using blob from admin export API. */
+  /** Triggers CSV download using blob from admin export API. Passes active filters so export matches what is visible in the table. */
   const handleExportCsv = () => {
-    getAdminExportCsv()
+    getAdminExportCsv({
+      search: search || undefined,
+      status: statusFilter !== "All Status" ? statusFilter : undefined,
+      course_id: courseFilter !== "All Courses" ? courseFilter : undefined,
+    })
       .then((blob) => {
         const a = document.createElement("a");
         a.href = URL.createObjectURL(blob);

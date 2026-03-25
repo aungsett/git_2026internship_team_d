@@ -12,10 +12,16 @@ CREATE TABLE IF NOT EXISTS courses (
     course_name VARCHAR(100) NOT NULL,
     course_level VARCHAR(50) NOT NULL CHECK (course_level IN ('Beginner', 'Intermediate', 'Advanced'))
 );
-CREATE TABLE IF NOT EXISTS applicants (
-    applicant_id SERIAL PRIMARY KEY,
-    user_id INT UNIQUE NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
-    full_name VARCHAR(100) NOT NULL,    
+CREATE TABLE IF NOT EXISTS applications (
+    application_id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    course_id INT NOT NULL REFERENCES courses(course_id),
+    course_schedule VARCHAR(50),
+    status VARCHAR(50) DEFAULT 'New' CHECK (status IN ('New', 'Under Review', 'Shortlisted', 'Rejected')),
+    applied_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    -- Per-application snapshot of what the applicant submitted in the form.
+    -- Stored here (not in a shared profile row) so each application is independent.
+    full_name VARCHAR(100) NOT NULL,
     phone_number VARCHAR(20) NOT NULL,
     location VARCHAR(100),
     date_of_birth DATE NOT NULL,
@@ -30,17 +36,6 @@ CREATE TABLE IF NOT EXISTS applicants (
     industry VARCHAR(100),
     professional_summary TEXT
 );
-
-CREATE TABLE IF NOT EXISTS applications (
-    application_id SERIAL PRIMARY KEY,
-    applicant_id INT NOT NULL REFERENCES applicants(applicant_id) ON DELETE CASCADE,
-    course_id INT NOT NULL REFERENCES courses(course_id),
-    course_schedule VARCHAR(50),
-    status VARCHAR(50) DEFAULT 'New' CHECK (status IN ('New', 'Under Review', 'Shortlisted', 'Rejected')),
-    applied_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
--- For existing DBs created before course_schedule was added:
-ALTER TABLE applications ADD COLUMN IF NOT EXISTS course_schedule VARCHAR(50);
 
 CREATE TABLE IF NOT EXISTS documents (
     document_id SERIAL PRIMARY KEY,
