@@ -165,6 +165,13 @@ export default function ApplicantDetailPage() {
     Rejected: "bg-[#fee2e2] text-[#dc2626]",
   };
 
+  const yearsExpNumber =
+    typeof detail.years_experience === "string"
+      ? Number(detail.years_experience)
+      : detail.years_experience;
+  const showYearsExp =
+    yearsExpNumber != null && !Number.isNaN(yearsExpNumber) && yearsExpNumber > 0;
+
   const statusOptStyle: Record<string, string> = {
     New: "bg-[#e0e7ff] text-[#4f46e5]",
     "Under Review": "bg-[#fef3c7] text-[#d97706]",
@@ -227,9 +234,9 @@ export default function ApplicantDetailPage() {
                   <span className="py-1.5 px-3 sm:px-3.5 bg-purple-100 text-purple-700 rounded-[16px] sm:rounded-[20px] text-[0.75rem] sm:text-[0.8rem] font-medium">
                     {detail.course_name}
                   </span>
-                  {detail.years_experience && (
+                  {showYearsExp && (
                     <span className="py-1.5 px-3 sm:px-3.5 bg-blue-100 text-blue-700 rounded-[16px] sm:rounded-[20px] text-[0.75rem] sm:text-[0.8rem] font-medium">
-                      {detail.years_experience} Years Exp
+                      {yearsExpNumber} Years Exp
                     </span>
                   )}
                   <span
@@ -283,9 +290,7 @@ export default function ApplicantDetailPage() {
               <InfoRow
                 label="Experience"
                 value={
-                  detail.years_experience
-                    ? `${detail.years_experience} years`
-                    : null
+                  showYearsExp ? `${yearsExpNumber} years` : null
                 }
               />
               <InfoRow

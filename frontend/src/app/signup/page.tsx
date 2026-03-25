@@ -137,7 +137,7 @@ export default function SignupPage() {
             Create Your Account
           </h1>
           <p className="text-white/90 text-[1.05rem] leading-[1.7] mb-10">
-            Join RecruitPro to apply for courses, track your applications, and
+            Join RecruitPro to apply for jobs, track your applications, and
             connect with top employers.
           </p>
           <div className="flex items-center gap-3.5 py-4 px-5 bg-white/[0.12] rounded-[14px] mb-3.5 border border-white/[0.18]">
@@ -169,7 +169,7 @@ export default function SignupPage() {
               🎯
             </div>
             <div className="text-white text-[0.95rem] font-medium">
-              Get matched with the right courses
+              Get matched with the right roles
             </div>
           </div>
         </div>
@@ -207,7 +207,7 @@ export default function SignupPage() {
 
         {accountExists && (
           <div className="fixed right-5 top-5 z-40 rounded-xl bg-red-500 px-6 py-3 text-white shadow-lg">
-            ⚠️ Account already exists.
+            Mail already in use, please login.
             <span
               onClick={() => router.push("/login")}
               className="ml-2 cursor-pointer font-semibold underline"

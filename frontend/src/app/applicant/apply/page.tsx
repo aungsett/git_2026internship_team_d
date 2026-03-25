@@ -5,7 +5,7 @@
  * Requires login (redirects if no token). Loads courses from API; submits via submitApplication with CV file.
  */
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -108,6 +108,9 @@ export default function ApplicantApplyPage() {
   const [industryOther, setIndustryOther] = useState("");
   const [currentStep, setCurrentStep] = useState(1);
 
+  // Ensures the application is submitted only when the user clicks the submit button.
+  const submitRequestedRef = useRef(false);
+
   const graduationYearOptions = useMemo(() => graduationYears(), []);
 
   useEffect(() => {
@@ -207,7 +210,7 @@ export default function ApplicantApplyPage() {
       if (!courseSchedule)
         errors.course_schedule = "Please select your preferred Japanese Language course schedule.";
       if (!form.course_id && courses.length > 0)
-        errors.course_id = "Please select a course.";
+        errors.course_id = "Please select a program.";
     }
 
     if (step === 5) {
@@ -249,6 +252,7 @@ export default function ApplicantApplyPage() {
     if ((form.professional_summary || "").length > PROFESSIONAL_SUMMARY_MAX) return false;
 
     if (!courseSchedule) return false;
+    if (!form.course_id) return false;
 
     if (!cvFile || cvFile.size > MAX_FILE_SIZE) return false;
 
@@ -257,12 +261,19 @@ export default function ApplicantApplyPage() {
     return true;
   }, [form, email, courseSchedule, cvFile, agree, hasExperience]);
 
-  const handleNext = () => {
+  const handleNext = (e: React.MouseEvent<HTMLButtonElement>) => {
+    // Prevent any accidental form submission when switching steps.
+    e.preventDefault();
+    e.stopPropagation();
+
     if (!validateStep(currentStep)) return;
     if (currentStep < TOTAL_STEPS) setCurrentStep((s) => s + 1);
   };
 
-  const handlePrev = () => {
+  const handlePrev = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+
     setError("");
     setFieldErrors({});
     if (currentStep > 1) setCurrentStep((s) => s - 1);
@@ -299,6 +310,14 @@ export default function ApplicantApplyPage() {
   /** Submits the full application (step 6 must be valid and terms agreed). */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Only allow submission from the final step.
+    if (currentStep !== TOTAL_STEPS) return;
+
+    // Only proceed if the user explicitly clicked "Submit Application".
+    if (!submitRequestedRef.current) return;
+    submitRequestedRef.current = false;
+
     if (!validateStep(6)) return;
     setError("");
     setLoading(true);
@@ -325,7 +344,7 @@ export default function ApplicantApplyPage() {
         company_name: form.company_name || "",
         industry: industryValue || "",
         professional_summary: summary,
-        course_id: form.course_id || (courses[0] ? String(courses[0].course_id) : ""),
+        course_id: form.course_id,
         course_schedule: courseSchedule || "",
         cv_file: cvFile || undefined,
       };
@@ -791,7 +810,7 @@ export default function ApplicantApplyPage() {
                 {courses.length > 0 && (
                   <div className="sm:col-span-2">
                     <label className="text-[0.9rem] font-semibold text-[#374151] mb-2 block">
-                      Program (Optional)
+                      Program <span className="text-red-500">*</span>
                     </label>
                     <div className="flex flex-wrap gap-2.5">
                       {courses.map((c) => (
@@ -1001,6 +1020,9 @@ export default function ApplicantApplyPage() {
             ) : (
               <button
                 type="submit"
+                onClick={() => {
+                  submitRequestedRef.current = true;
+                }}
                 disabled={loading || !allStepsValid}
                 className="py-3 px-6 sm:px-8 bg-linear-to-r from-purple-400 to-indigo-500 border-none rounded-[14px] text-white font-semibold cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-[0_15px_30px_rgba(99,102,241,0.3)] disabled:opacity-50 disabled:cursor-not-allowed min-h-[48px]"
               >

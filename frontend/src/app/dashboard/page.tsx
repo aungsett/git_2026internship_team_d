@@ -17,6 +17,13 @@ export default function ApplicantDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const statusStyle: Record<string, string> = {
+    New: "bg-[#e0e7ff] text-[#4f46e5]",
+    "Under Review": "bg-[#fef3c7] text-[#d97706]",
+    Shortlisted: "bg-[#d1fae5] text-[#059669]",
+    Rejected: "bg-[#fee2e2] text-[#dc2626]",
+  };
+
   useEffect(() => {
     if (!getToken()) {
       router.replace("/login");
@@ -85,7 +92,7 @@ export default function ApplicantDashboard() {
                 Ready to Apply?
               </h2>
               <p className="text-[#64748b] text-sm sm:text-base leading-relaxed">
-                Submit your application for a course. You can fill in your
+                Submit your application for a job. You can fill in your
                 personal details, education, experience, and attach your CV.
               </p>
             </div>
@@ -96,13 +103,7 @@ export default function ApplicantDashboard() {
               href="/applicant/apply"
               className="inline-flex items-center justify-center gap-2 py-4 px-6 sm:px-8 bg-linear-to-r from-purple-400 to-indigo-500 text-white rounded-[14px] font-semibold no-underline transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_15px_30px_rgba(99,102,241,0.3)] min-h-[48px] w-full sm:w-auto"
             >
-              📄 Apply for a course
-            </Link>
-            <Link
-              href="/"
-              className="inline-flex items-center justify-center gap-2 py-4 px-6 sm:px-8 bg-white border-2 border-[#e2e8f0] text-[#475569] rounded-[14px] font-semibold no-underline transition-all duration-300 hover:bg-[#f8fafc] hover:border-[#cbd5e1] min-h-[48px] w-full sm:w-auto"
-            >
-              ← Back to home
+            📄 Apply for a job
             </Link>
           </div>
         </div>
@@ -140,7 +141,11 @@ export default function ApplicantDashboard() {
                         <td className="py-3 pr-4 text-[#334155]">{ref}</td>
                         <td className="py-3 pr-4 text-[#334155]">{it.course_name || "—"}</td>
                         <td className="py-3 pr-4">
-                          <span className="inline-block py-1 px-2 rounded-lg bg-indigo-50 text-indigo-700 font-medium">
+                          <span
+                            className={`inline-block py-1 px-2 rounded-lg font-medium ${
+                              statusStyle[it.status] || "bg-gray-100 text-gray-700"
+                            }`}
+                          >
                             {it.status}
                           </span>
                         </td>

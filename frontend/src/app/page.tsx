@@ -1,9 +1,9 @@
 import Link from "next/link";
 
-/** Landing page: hero for Japanese language programs, primary CTA (Apply / Sign up), and links to Login, Terms. */
+/** Landing page: hero for job applications, primary CTA (Apply / Sign up). */
 export default function Home() {
   return (
-    <div className="min-h-screen text-[#1e293b] bg-[#f8fafc]">
+    <div className="min-h-screen flex flex-col text-[#1e293b] bg-[#f8fafc]">
       {/* Nav */}
       <nav className="fixed top-0 left-0 right-0 z-50 px-4 sm:px-6 lg:px-12 py-3 sm:py-4 flex flex-wrap justify-between items-center gap-3 bg-white/95 backdrop-blur-xl border-b border-[#e2e8f0]">
         <Link href="/" className="flex items-center gap-2 sm:gap-2.5 text-lg sm:text-xl font-bold text-[#1e293b] no-underline">
@@ -29,21 +29,21 @@ export default function Home() {
       </nav>
 
       {/* Hero */}
-      <main className="pt-[88px] sm:pt-[100px] lg:pt-[120px] pb-12 sm:pb-16 lg:pb-20 px-4 sm:px-6 lg:px-12 max-w-[1100px] mx-auto">
+      <main className="flex-1 pt-[88px] sm:pt-[100px] lg:pt-[120px] pb-8 sm:pb-10 lg:pb-12 px-4 sm:px-6 lg:px-12 max-w-[1100px] mx-auto">
         <div className="text-center mb-10 sm:mb-14">
           <span className="inline-block px-3 py-1.5 sm:px-4 sm:py-2 bg-linear-to-r from-purple-200 to-indigo-200 text-purple-800 rounded-[16px] sm:rounded-[20px] text-[0.75rem] sm:text-[0.85rem] font-semibold mb-4 sm:mb-5">
-            Japanese Language Programs
+            Job Opportunities
           </span>
           <h1 className="text-[2rem] min-[480px]:text-[2.25rem] sm:text-[3rem] lg:text-[3.5rem] font-extrabold text-[#0f172a] leading-tight mb-4 sm:mb-5 px-1">
             Start Your
             <br className="sm:hidden" />
             <span className="bg-linear-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent">
-              Learning Journey
+              Application Journey
             </span>
           </h1>
           <p className="text-[#64748b] text-base sm:text-lg max-w-[520px] mx-auto leading-relaxed px-2">
-            Apply for our Japanese language courses — from beginner to advanced. 
-            We&apos;ll review your application and get back to you within 5–7 business days.
+            Apply for roles that match your skills. We&apos;ll review your application and
+            get back to you within 5–7 business days.
           </p>
         </div>
 
@@ -53,7 +53,7 @@ export default function Home() {
             href="/signup"
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 py-4 px-8 sm:py-4 sm:px-10 bg-linear-to-r from-purple-500 to-indigo-500 text-white rounded-2xl font-semibold text-base sm:text-lg no-underline transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_40px_rgba(99,102,241,0.35)] min-h-[52px]"
           >
-            Apply for a course
+            Apply for a job
           </Link>
           <Link
             href="/login"
@@ -74,7 +74,7 @@ export default function Home() {
       </main>
 
       {/* Footer - minimal */}
-      <footer className="border-t border-[#e2e8f0] bg-white/80 py-6 px-4 sm:px-6 lg:px-12">
+      <footer className="border-t border-[#e2e8f0] bg-white/80 py-4 px-4 sm:px-6 lg:px-12">
         <div className="max-w-[1100px] mx-auto flex flex-col min-[480px]:flex-row flex-wrap items-center justify-center sm:justify-between gap-4 text-sm text-[#64748b]">
           <span>© RecruitPro. All rights reserved.</span>
           <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6">
