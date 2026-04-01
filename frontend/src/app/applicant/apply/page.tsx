@@ -32,6 +32,7 @@ function isValidEmail(email: string): boolean {
 }
 
 const defaultForm: ApplicationFormData = {
+  full_name: "",
   phone_number: "",
   location: "",
   date_of_birth: "",
@@ -363,6 +364,24 @@ export default function ApplicantApplyPage() {
     }
   };
 
+  /** Resets all form states to their defaults, allowing for another application submission. */
+  const resetForm = () => {
+    setForm(defaultForm);
+    setCvFile(null);
+    setUploadProgress(0);
+    setError("");
+    setFieldErrors({});
+    setSuccess(false);
+    setApplicationRef("");
+    setAgree(false);
+    setEmail("");
+    setCourseSchedule("");
+    setHasExperience(null);
+    setIndustryOther("");
+    setCurrentStep(1);
+    submitRequestedRef.current = false;
+  };
+
   if (!mounted) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -386,12 +405,12 @@ export default function ApplicantApplyPage() {
             We will review your application within 5-7 business days.
           </p>
           <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
-            <Link
-              href="/applicant/apply"
-              className="inline-block py-3 px-6 bg-indigo-500 text-white font-semibold rounded-xl hover:bg-indigo-600 no-underline"
+            <button
+              onClick={resetForm}
+              className="inline-block py-3 px-6 bg-indigo-500 text-white font-semibold rounded-xl hover:bg-indigo-600 border-none cursor-pointer"
             >
               Submit another application
-            </Link>
+            </button>
             <Link
               href="/dashboard"
               className="inline-block py-3 px-6 border-2 border-[#e2e8f0] text-[#1e293b] font-semibold rounded-xl hover:bg-[#f8fafc] no-underline"

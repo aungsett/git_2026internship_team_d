@@ -231,17 +231,19 @@ export default function LoginCard({
             Continue with Google
           </button> */}
 
-          <div className="text-center mt-6">
-            <p className="text-sm text-[#64748b]">
-              Don&apos;t have an account?{" "}
-              <Link
-                href="/signup"
-                className="text-indigo-600 font-medium hover:underline"
-              >
-                Sign up
-              </Link>
-            </p>
-          </div>
+          {!isAdmin && (
+            <div className="text-center mt-6">
+              <p className="text-sm text-[#64748b]">
+                Don&apos;t have an account?{" "}
+                <Link
+                  href="/signup"
+                  className="text-indigo-600 font-medium hover:underline"
+                >
+                  Sign up
+                </Link>
+              </p>
+            </div>
+          )}
 
           <div className="text-center mt-7 pt-6 border-t border-[#e2e8f0]">
             <Link

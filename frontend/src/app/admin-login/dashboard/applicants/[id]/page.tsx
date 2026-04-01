@@ -250,16 +250,7 @@ export default function ApplicantDetailPage() {
               </div>
             </div>
 
-            <div className="flex shrink-0 lg:justify-end">
-              <button
-                type="button"
-                onClick={handleDownloadCv}
-                disabled={cvDownloading}
-                className="w-full sm:w-auto bg-[#eef2ff] border border-[#c7d2fe] text-[#4f46e5] py-3 px-5 rounded-xl font-semibold cursor-pointer transition-all flex items-center justify-center gap-2 hover:bg-indigo-500 hover:text-white hover:shadow-[0_8px_16px_rgba(99,102,241,0.2)] disabled:opacity-50 min-h-[48px]"
-              >
-                {cvDownloading ? "⏳" : "⬇️"} Download CV
-              </button>
-            </div>
+
           </div>
         </div>
 
