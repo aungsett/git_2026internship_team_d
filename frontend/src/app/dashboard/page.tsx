@@ -16,6 +16,7 @@ export default function ApplicantDashboard() {
   const [items, setItems] = useState<MyApplicationStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [authorized, setAuthorized] = useState(false);
 
   const statusStyle: Record<string, string> = {
     New: "bg-[#e0e7ff] text-[#4f46e5]",
@@ -25,15 +26,19 @@ export default function ApplicantDashboard() {
   };
 
   useEffect(() => {
-    if (!getToken()) {
-      router.replace("/login");
-      return;
-    }
-    getMyApplicationStatuses()
-      .then(setItems)
-      .catch((e) => setError(e instanceof Error ? e.message : "Failed to load application status"))
-      .finally(() => setLoading(false));
-  }, [router]);
+  if (status === "loading") return;
+
+  // 🚨 If not authenticated at all → redirect
+  if (status === "unauthenticated" && !getToken()){
+    router.replace("/login");
+    return;
+  }
+
+  // ✅ If authenticated → allow
+  if (status === "authenticated") {
+    setAuthorized(true);
+  }
+}, [router]);
 
   /** Clears token/role from localStorage and redirects to applicant login. */
   const handleLogout = () => {

@@ -223,13 +223,13 @@ export default function LoginCard({
             </button>
           </form>
 
-          {/* <button
+          <button
             type="button"
             onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
             className="w-full py-4 bg-linear-to-r from-purple-400 to-indigo-500 border-none rounded-[14px] text-white font-semibold cursor-pointer transition-all duration-300 flex items-center justify-center gap-2 mt-4 hover:-translate-y-0.5 hover:shadow-[0_16px_32px_rgba(99,102,241,0.35)]"
           >
             Continue with Google
-          </button> */}
+          </button>
 
           {!isAdmin && (
             <div className="text-center mt-6">
