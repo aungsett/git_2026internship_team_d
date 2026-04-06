@@ -219,8 +219,8 @@ export default function SignupPage() {
 
         <div className="w-full max-w-[420px] min-w-0 px-1">
           <div className="mb-8">
-            <div className="mb-6 font-extrabold text-2xl flex items-center gap-2 text-[#0f172a]">
-              🎯 RecruitPro
+            <div className="mb-6 flex items-center justify-center lg:justify-start">
+              <img src="/logo.png" alt="RecruitPro Logo" className="h-[50px] w-auto" />
             </div>
             <h2 className="text-[1.8rem] font-bold text-[#0f172a] mb-2">
               Create Your Account

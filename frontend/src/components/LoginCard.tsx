@@ -150,8 +150,8 @@ export default function LoginCard({
       <div className="flex-1 w-full min-w-0 p-4 sm:p-6 lg:p-10 xl:p-[60px] flex flex-col justify-center items-center bg-white">
         <div className="w-full max-w-[420px] min-w-0">
           <div className="mb-8">
-            <div className="mb-6 font-extrabold text-2xl flex items-center gap-2 text-[#0f172a]">
-              🎯 RecruitPro
+            <div className="mb-6 flex items-center justify-center lg:justify-start">
+              <img src="/logo.png" alt="RecruitPro Logo" className="h-[50px] w-auto" />
             </div>
             {isAdmin && (
               <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-linear-to-r from-indigo-600/10 to-purple-600/10 rounded-2xl text-[0.75rem] font-semibold text-indigo-600 mb-3.5">
@@ -223,13 +223,15 @@ export default function LoginCard({
             </button>
           </form>
 
-          {/* <button
-            type="button"
-            onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
-            className="w-full py-4 bg-linear-to-r from-purple-400 to-indigo-500 border-none rounded-[14px] text-white font-semibold cursor-pointer transition-all duration-300 flex items-center justify-center gap-2 mt-4 hover:-translate-y-0.5 hover:shadow-[0_16px_32px_rgba(99,102,241,0.35)]"
-          >
-            Continue with Google
-          </button> */}
+          {!isAdmin && (
+            <button
+              type="button"
+              onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+              className="w-full py-4 bg-linear-to-r from-purple-400 to-indigo-500 border-none rounded-[14px] text-white font-semibold cursor-pointer transition-all duration-300 flex items-center justify-center gap-2 mt-4 hover:-translate-y-0.5 hover:shadow-[0_16px_32px_rgba(99,102,241,0.35)]"
+            >
+              Continue with Google
+            </button>
+          )}
 
           {!isAdmin && (
             <div className="text-center mt-6">
