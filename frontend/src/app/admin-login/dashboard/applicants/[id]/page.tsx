@@ -190,11 +190,8 @@ export default function ApplicantDetailPage() {
       )}
       {/* Nav */}
       <nav className="fixed top-0 left-0 right-0 z-50 px-4 sm:px-6 lg:px-12 py-3 sm:py-4 flex flex-wrap justify-between items-center gap-2 bg-white/95 backdrop-blur-xl border-b border-[#e2e8f0]">
-        <div className="flex items-center gap-2 sm:gap-2.5 text-lg sm:text-xl font-bold text-[#1e293b]">
-          <span className="w-9 h-9 sm:w-10 sm:h-10 bg-linear-to-br from-cyan-200 to-purple-300 rounded-xl flex items-center justify-center text-base sm:text-lg shrink-0">
-            🎯
-          </span>
-          RecruitPro
+        <div className="flex items-center no-underline">
+          <img src="/logo.png" alt="RecruitPro Logo" className="h-[40px] sm:h-[50px] w-auto" />
         </div>
         <div className="flex items-center gap-4 sm:gap-6">
           <Link href="/admin-login/dashboard" className="text-indigo-500 text-sm sm:text-base font-medium no-underline py-2">
