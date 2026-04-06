@@ -8,6 +8,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import {
   getMyApplicationStatuses,
   getToken,
@@ -93,6 +94,7 @@ function SkeletonCard() {
 /* ================================================================== */
 export default function ApplicantDashboard() {
   const router = useRouter();
+  const { status } = useSession();
   const [items, setItems] = useState<MyApplicationStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -100,10 +102,17 @@ export default function ApplicantDashboard() {
 
   useEffect(() => {
     setMounted(true);
-    if (!getToken()) {
+
+    // Skip check while session is loading
+    if (status === "loading") return;
+
+    // 🚨 If not authenticated (no Google session AND no local token) → redirect
+    if (status === "unauthenticated" && !getToken()) {
       router.replace("/login");
       return;
     }
+
+    // ✅ Authenticated (either via Google or local token) → fetch data
     getMyApplicationStatuses()
       .then(setItems)
       .catch((e) =>
@@ -112,7 +121,7 @@ export default function ApplicantDashboard() {
         )
       )
       .finally(() => setLoading(false));
-  }, [router]);
+  }, [router, status]);
 
   /** Clears token/role from localStorage and redirects to applicant login. */
   const handleLogout = () => {
@@ -201,7 +210,7 @@ export default function ApplicantDashboard() {
                 in your career journey.
               </p>
             </div>
-            <Link
+            {/*<Link
               href="/applicant/apply"
               className="group inline-flex items-center justify-center gap-2 py-3 px-7 text-white rounded-xl font-semibold text-sm sm:text-base no-underline transition-all duration-300 hover:-translate-y-0.5 shrink-0"
               style={{
@@ -239,7 +248,7 @@ export default function ApplicantDashboard() {
               >
                 <polyline points="9 18 15 12 9 6" />
               </svg>
-            </Link>
+            </Link>*/}
           </div>
         </div>
 

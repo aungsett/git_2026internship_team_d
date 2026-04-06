@@ -79,8 +79,8 @@ const handler = NextAuth({
   },
 
   pages: {
-    signIn: "/auth/signin", // optional custom sign-in page
-    error: "/auth/error",   // optional error page
+    // signIn: "/auth/signin", // optional custom sign-in page
+    // error: "/auth/error",   // optional error page
   },
 });
 

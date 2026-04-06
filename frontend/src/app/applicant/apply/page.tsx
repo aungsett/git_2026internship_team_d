@@ -113,6 +113,7 @@ export default function ApplicantApplyPage() {
   const submitRequestedRef = useRef(false);
 
   const graduationYearOptions = useMemo(() => graduationYears(), []);
+  const [authorized, setAuthorized] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -120,14 +121,19 @@ export default function ApplicantApplyPage() {
 
   useEffect(() => {
     if (!mounted) return;
-    if (!getToken()) {
+    if (status === "unauthenticated" && !getToken()){
       router.replace("/login");
       return;
+    }
+  
+    // ✅ If authenticated → allow
+    if (status === "authenticated") {
+      setAuthorized(true);
     }
     getCourses()
       .then(setCourses)
       .catch(() => setError("Failed to load courses."));
-  }, [mounted, router]);
+  }, [mounted && status, router]);
 
   const handleChange = (
     e: React.ChangeEvent<
