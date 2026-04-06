@@ -376,12 +376,12 @@ export default function Home() {
                     className="w-8 h-8 rounded-full border-2 border-white flex items-center justify-center text-white text-xs font-bold"
                     style={{ background: c, zIndex: 4 - i }}
                   >
-                    {["A", "J", "K", "M"][i]}
+                    {["J", "P", "K", "M"][i]}
                   </div>
                 ))}
               </div>
               <span>
-                <strong className="text-[#475569]">25+</strong> applicants joined this month
+                <strong className="text-[#475569]">50+</strong> applicants joined recently
               </span>
             </div>
           </div>
@@ -631,31 +631,39 @@ export default function Home() {
               </h2>
             </div>
 
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {[
                 {
                   name: "Jai Mishra",
                   role: "Software Engineer",
-                  text: "The multi-step application form was incredibly easy to fill out. I didn't feel overwhelmed at all, and it saved my progress perfectly!",
+                  text: "The multi-step application form was incredibly easy to navigate. I never felt overwhelmed, and being able to save my progress halfway was a total lifesaver!",
                   rating: 5,
                   initials: "JM",
                   color: "#6366f1",
                 },
                 {
                   name: "Pranav Madhu",
-                  role: "Data Analyst",
-                  text: "The email notifications for updates are a game-changer. I instantly knew when my application status changed without having to constantly check the portal.",
+                  role: "Backend Developer",
+                  text: "The instant email notifications are a total game-changer. I knew the moment my status changed without having to repeatedly login and check the portal manually.",
                   rating: 5,
                   initials: "PM",
                   color: "#8b5cf6",
                 },
                 {
                   name: "Krishna Yadav",
-                  role: "Product Manager",
-                  text: "Best hiring platform I've used. The dashboard is super intuitive and tracking my application status in real-time gave me peace of mind.",
+                  role: "DevOps & Deployment",
+                  text: "This is easily the best hiring platform I've ever used. The dashboard is super intuitive, and tracking my application in real-time gave me such great peace of mind.",
                   rating: 5,
                   initials: "KY",
                   color: "#06b6d4",
+                },
+                {
+                  name: "Manogna Kolla",
+                  role: "Security & Authentication",
+                  text: "The real-time tracking feature is absolutely amazing. I always knew exactly where my application stood, which helped reduce so much stress during the long wait.",
+                  rating: 5,
+                  initials: "MK",
+                  color: "#d946ef",
                 },
               ].map((t, i) => (
                 <div
